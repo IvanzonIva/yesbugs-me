@@ -2,13 +2,13 @@ package Ivancompany.nbanktest.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AccountResponse {
+public class TransactionResponse {
     private Long id;
-    private String accountNumber;
-    private Double balance;
-    private List<TransactionResponse> transactions;
+    private Double amount;
+    private String type;
+    private String timestamp;
+    private Long relatedAccountId;
 }

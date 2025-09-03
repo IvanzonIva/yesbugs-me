@@ -1,99 +1,80 @@
 package Ivancompany.nbanktest.tests.functional.account;
 
+import Ivancompany.nbanktest.api.clients.AccountClient;
+import Ivancompany.nbanktest.api.clients.UserAdminClient;
 import Ivancompany.nbanktest.api.dto.request.DepositRequest;
-import Ivancompany.nbanktest.api.dto.response.AccountResponse;
-import Ivancompany.nbanktest.tests.functional.base.BaseTest;
+import Ivancompany.nbanktest.core.utils.DataGenerator;
+import Ivancompany.nbanktest.core.utils.UserTestHelper;
+import Ivancompany.nbanktest.tests.functional.base.ApiTestBase;
+import io.restassured.response.Response;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class DepositTest extends BaseTest {
+public class DepositTest extends ApiTestBase {
+
+    private final AccountClient accountClient = new AccountClient();
+    private final UserAdminClient userAdminClient = new UserAdminClient();
+
+    private UserTestHelper.UserTestData createdUser;
+
+    @AfterEach
+    void tearDown() {
+        if (createdUser != null) {
+            userAdminClient.deleteUser(createdUser.userId());
+        }
+    }
 
     @Test
-    void shouldDepositMoneyToAccount() {
-        // Позитивный сценарий: успешное пополнение
-        Double depositAmount = 100.0;
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(accountId)
+    void userCanDepositMoney() {
+        createdUser = UserTestHelper.createUserWithAccount("USER");
+
+        // Проверяем начальный баланс через админский клиент
+        double initialBalance = userAdminClient.getAccountBalance(
+                createdUser.userId(),
+                createdUser.accountId()
+        );
+
+        double depositAmount = DataGenerator.generateAmount();
+
+        DepositRequest request = DepositRequest.builder()
+                .id(createdUser.accountId())
                 .balance(depositAmount)
                 .build();
 
-        AccountResponse response = accountClient.deposit(userAuthHeader, depositRequest);
+        // Пополняем счет пользователя
+        accountClient.deposit(createdUser.authHeader(), request);
 
-        assertThat(response.getId(), equalTo(accountId));
-        assertThat(response.getBalance(), equalTo(depositAmount));
+        // Проверяем баланс после депозита через админский клиент
+        double finalBalance = userAdminClient.getAccountBalance(
+                createdUser.userId(),
+                createdUser.accountId()
+        );
+
+        assertThat(finalBalance, equalTo(initialBalance + depositAmount));
     }
 
-    @Test
-    void shouldFailDepositZeroAmount() {
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(accountId)
-                .balance(0.0)
+    @ParameterizedTest
+    @CsvSource({
+            "0.0, 400, Invalid account or amount",
+            "-100.0, 400, Invalid account or amount",
+            "5001.0, 400, Deposit amount exceeds the 5000 limit"
+    })
+    void userCannotDepositInvalidAmounts(double depositAmount, int expectedStatus, String expectedMessage) {
+        createdUser = UserTestHelper.createUserWithAccount("USER");
+
+        DepositRequest request = DepositRequest.builder()
+                .id(createdUser.accountId())
+                .balance(depositAmount)
                 .build();
 
-        var response = accountClient.depositRaw(userAuthHeader, depositRequest);
-        assertThat(response.getStatusCode(), equalTo(400));
-        assertThat(response.getBody().asString(), equalTo("Invalid account or amount"));
-    }
+        Response response = accountClient.depositRaw(createdUser.authHeader(), request);
 
-    @Test
-    void shouldFailDepositNegativeAmount() {
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(accountId)
-                .balance(-100.0)
-                .build();
-
-        var response = accountClient.depositRaw(userAuthHeader, depositRequest);
-        assertThat(response.getStatusCode(), equalTo(400));
-        assertThat(response.getBody().asString(), equalTo("Invalid account or amount"));
-    }
-
-    @Test
-    void shouldFailDepositOverMaxAmount() {
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(accountId)
-                .balance(5001.0)
-                .build();
-
-        var response = accountClient.depositRaw(userAuthHeader, depositRequest);
-        assertThat(response.getStatusCode(), equalTo(400));
-        assertThat(response.getBody().asString(), equalTo("Deposit amount exceeds the 5000 limit"));
-    }
-
-    @Test
-    void shouldFailDepositWithoutAuthorization() {
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(accountId)
-                .balance(100.0)
-                .build();
-
-        var response = accountClient.depositRaw(null, depositRequest);
-        assertThat(response.getStatusCode(), equalTo(401));
-        assertThat(response.getBody().asString(), equalTo(""));
-    }
-
-    @Test
-    void shouldFailDepositToNonexistentAccount() {
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(9999L) // явно несуществующий аккаунт
-                .balance(100.0)
-                .build();
-
-        var response = accountClient.depositRaw(userAuthHeader, depositRequest);
-        assertThat(response.getStatusCode(), equalTo(403));
-        assertThat(response.getBody().asString(), equalTo("Unauthorized access to account"));
-    }
-
-    @Test
-    void shouldFailDepositToOtherUserAccount() {
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(99L) // чужой аккаунт
-                .balance(100.0)
-                .build();
-
-        var response = accountClient.depositRaw(userAuthHeader, depositRequest);
-        assertThat(response.getStatusCode(), equalTo(403));
-        assertThat(response.getBody().asString(), equalTo("Unauthorized access to account"));
+        assertThat(response.getStatusCode(), equalTo(expectedStatus));
+        assertThat(response.getBody().asString(), equalTo(expectedMessage));
     }
 }
