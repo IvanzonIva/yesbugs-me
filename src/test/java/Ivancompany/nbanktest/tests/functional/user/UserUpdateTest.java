@@ -4,10 +4,15 @@ import Ivancompany.nbanktest.api.clients.UserClient;
 import Ivancompany.nbanktest.api.dto.request.UpdateProfileRequest;
 import Ivancompany.nbanktest.api.dto.response.ProfileUpdateResponse;
 import Ivancompany.nbanktest.api.dto.response.UserResponse;
+import Ivancompany.nbanktest.core.models.Role;
+import Ivancompany.nbanktest.core.services.UserTestService;
 import Ivancompany.nbanktest.core.utils.DataGenerator;
-import Ivancompany.nbanktest.tests.functional.base.SingleUserTestBase;
+import Ivancompany.nbanktest.core.utils.UserTestHelper;
+import Ivancompany.nbanktest.tests.functional.base.ApiTestBase;
 import io.restassured.response.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,59 +22,65 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 
-public class UserUpdateTest extends SingleUserTestBase {
+public class UserUpdateTest extends ApiTestBase {
+
+    // Константы для сообщений
+    private static final String PROFILE_UPDATED_SUCCESS_MESSAGE = "Profile updated successfully";
+    private static final String UNAUTHORIZED_MESSAGE = "";
+
+    // Константы для длин имен
+    private static final int MIN_NAME_LENGTH = 3;
+    private static final int MAX_NAME_LENGTH = 15;
 
     private final UserClient userClient = new UserClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserTestService userTestService = new UserTestService(userAdminClient);
+
+    private UserTestHelper.UserTestData testUser;
     private String originalUsername;
+    private String userAuthHeader;
 
     @BeforeEach
-    void saveOriginalProfile() {
+    void setUp() {
+        testUser = UserTestHelper.createUserWithAccount(Role.USER);
+        userAuthHeader = testUser.authHeader();
+
         UserResponse profile = userClient.getProfile(userAuthHeader);
         originalUsername = profile.getUsername();
-        System.out.println("Original username: " + originalUsername);
     }
 
-    @ParameterizedTest(name = "Name: {0} → Expected: {1}")
+    @AfterEach
+    void tearDown() {
+        if (testUser != null) {
+            userTestService.safelyDeleteUser(testUser.userId());
+        }
+    }
+
+    @ParameterizedTest
     @MethodSource("provideNameTestCases")
-    void updateProfileWithDifferentNames(String testName, String nameToUpdate, int expectedStatus, boolean shouldSucceed) throws Exception {
+    void updateProfileWithDifferentNames(String testName, String nameToUpdate, int expectedStatus, boolean shouldSucceed) {
         UpdateProfileRequest request = UpdateProfileRequest.builder()
                 .name(nameToUpdate)
                 .build();
 
-        // Логируем запрос
-        System.out.println("=== Test case: " + testName + " ===");
-        System.out.println("Request JSON: " + objectMapper.writeValueAsString(request));
-
         if (shouldSucceed) {
             ProfileUpdateResponse response = userClient.updateProfile(userAuthHeader, request);
 
-            // Логируем ответ
-            System.out.println("Response JSON: " + objectMapper.writeValueAsString(response));
-
-            assertThat(response.getMessage(), equalTo("Profile updated successfully"));
+            assertThat(response.getMessage(), equalTo(PROFILE_UPDATED_SUCCESS_MESSAGE));
             assertThat(response.getCustomer().getName(), equalTo(nameToUpdate));
 
             UserResponse updatedProfile = userClient.getProfile(userAuthHeader);
-            System.out.println("Updated profile: " + objectMapper.writeValueAsString(updatedProfile));
-
             assertThat(updatedProfile.getName(), equalTo(nameToUpdate));
             assertThat(updatedProfile.getUsername(), equalTo(originalUsername));
         } else {
             Response response = userClient.updateProfileRaw(userAuthHeader, request);
 
-            // Логируем ответ
-            System.out.println("Response code: " + response.getStatusCode());
-            System.out.println("Response body: " + response.asString());
-
             assertThat(response.getStatusCode(), equalTo(expectedStatus));
 
             // Проверяем, что username не изменился
             UserResponse unchangedProfile = userClient.getProfile(userAuthHeader);
-            System.out.println("Unchanged profile: " + objectMapper.writeValueAsString(unchangedProfile));
-
             assertThat(unchangedProfile.getUsername(), equalTo(originalUsername));
         }
     }
@@ -77,42 +88,36 @@ public class UserUpdateTest extends SingleUserTestBase {
     private static Stream<Arguments> provideNameTestCases() {
         return Stream.of(
                 // Валидные тесты
-                Arguments.of("Valid name", "Alex Smith", 200, true),
-                Arguments.of("Valid name", "Maria Petrova", 200, true),
-                Arguments.of("Valid name", "John Doe", 200, true),
-                Arguments.of("Minimum length (3)", "ABC", 200, true),
-                Arguments.of("Maximum length (15)", "A".repeat(15), 200, true),
+                Arguments.of("Valid name", "Alex Smith", HttpStatus.SC_OK, true),
+                Arguments.of("Valid name", "Maria Petrova", HttpStatus.SC_OK, true),
+                Arguments.of("Valid name", "John Doe", HttpStatus.SC_OK, true),
+                Arguments.of("Minimum length", "ABC", HttpStatus.SC_OK, true),
+                Arguments.of("Maximum length", "A".repeat(MAX_NAME_LENGTH), HttpStatus.SC_OK, true),
 
                 // Инвалидные тесты
-                Arguments.of("Null value", null, 400, false),
-                Arguments.of("Empty string", "", 400, false),
-                Arguments.of("Only spaces", "   ", 400, false),
-                Arguments.of("Too short (1)", "A", 400, false),
-                Arguments.of("Too short (2)", "AB", 400, false),
-                Arguments.of("Too long (16)", "A".repeat(16), 400, false)
+                Arguments.of("Null value", null, HttpStatus.SC_BAD_REQUEST, false),
+                Arguments.of("Empty string", "", HttpStatus.SC_BAD_REQUEST, false),
+                Arguments.of("Only spaces", "   ", HttpStatus.SC_BAD_REQUEST, false),
+                Arguments.of("Too short", "A", HttpStatus.SC_BAD_REQUEST, false),
+                Arguments.of("Too short", "AB", HttpStatus.SC_BAD_REQUEST, false),
+                Arguments.of("Too long", "A".repeat(MAX_NAME_LENGTH + 1), HttpStatus.SC_BAD_REQUEST, false)
         );
     }
 
     @Test
-    void userCannotUpdateProfileWithoutAuth() throws Exception {
+    void userCannotUpdateProfileWithoutAuth() {
         String newName = DataGenerator.generateName();
         UpdateProfileRequest request = UpdateProfileRequest.builder()
                 .name(newName)
                 .build();
 
-        System.out.println("Request (unauthenticated): " + objectMapper.writeValueAsString(request));
-
         Response response = userClient.updateProfileRaw(null, request);
 
-        System.out.println("Response code: " + response.getStatusCode());
-        System.out.println("Response body: " + response.asString());
-
-        assertThat(response.getStatusCode(), equalTo(401));
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.SC_UNAUTHORIZED));
+        assertThat(response.getBody().asString(), equalTo(UNAUTHORIZED_MESSAGE));
 
         // Проверяем состояние окружения: username не изменился
         UserResponse profile = userClient.getProfile(userAuthHeader);
-        System.out.println("Profile after unauthenticated attempt: " + objectMapper.writeValueAsString(profile));
-
         assertThat(profile.getUsername(), equalTo(originalUsername));
     }
 }

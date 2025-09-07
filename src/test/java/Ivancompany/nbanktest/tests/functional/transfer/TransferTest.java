@@ -1,16 +1,20 @@
 package Ivancompany.nbanktest.tests.functional.account;
 
-import Ivancompany.nbanktest.api.clients.AccountClient;
-import Ivancompany.nbanktest.api.clients.UserAdminClient;
-import Ivancompany.nbanktest.api.dto.request.DepositRequest;
-import Ivancompany.nbanktest.api.dto.response.AccountResponse;
-import Ivancompany.nbanktest.tests.functional.base.ApiTestBase;
+import Ivancompany.nbanktest.core.models.Role;
+import Ivancompany.nbanktest.core.services.UserTestService;
+import Ivancompany.nbanktest.core.steps.AccountSteps;
+import Ivancompany.nbanktest.core.steps.TransferSteps;
 import Ivancompany.nbanktest.core.utils.UserTestHelper;
+import Ivancompany.nbanktest.tests.functional.base.ApiTestBase;
 import io.restassured.response.Response;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -25,112 +29,134 @@ public class TransferTest extends ApiTestBase {
     private static final long NON_EXISTENT_ACCOUNT = 9999L;
     private static final int MAX_TRANSFER_LIMIT = 10000;
 
-    private final AccountClient accountClient = new AccountClient();
-    private final UserAdminClient userAdminClient = new UserAdminClient();
+    // Константы для сообщений об ошибках
+    private static final String TRANSFER_AMOUNT_EXCEED_TEMPLATE = "Transfer amount cannot exceed %d";
+    private static final String INVALID_TRANSFER_MESSAGE = "Invalid transfer: insufficient funds or invalid accounts";
+    private static final String UNAUTHORIZED_ACCESS_MESSAGE = "Unauthorized access to account";
+    private static final String EMPTY_RESPONSE_MESSAGE = "";
+
+    private final AccountSteps accountSteps = new AccountSteps();
+    private final TransferSteps transferSteps = new TransferSteps();
+    private final UserTestService userTestService = new UserTestService(userAdminClient);
 
     private UserTestHelper.UserTestData createdUser;
 
     @AfterEach
     void tearDown() {
         if (createdUser != null) {
-            userAdminClient.deleteUser(createdUser.userId());
+            userTestService.safelyDeleteUser(createdUser.userId());
         }
     }
 
     @Test
     void shouldTransferMoneyBetweenAccounts() {
-        createdUser = UserTestHelper.createUserWithAccount("USER");
-        var account2 = createSecondAccount();
+        createdUser = UserTestHelper.createUserWithAccount(Role.USER);
+        var additionalAccount = accountSteps.createAccount(createdUser.authHeader());
 
-        // Депозит на первый аккаунт
-        deposit(createdUser.accountId(), INITIAL_DEPOSIT);
+        accountSteps.deposit(createdUser.authHeader(), createdUser.accountId(), INITIAL_DEPOSIT);
 
-        // Балансы до перевода
-        double balanceBefore1 = getBalance(createdUser.accountId());
-        double balanceBefore2 = getBalance(account2.getId());
+        // Получаем балансы
+        double balanceBefore1 = userAdminClient.getAccountBalance(createdUser.userId(), createdUser.accountId());
+        double balanceBefore2 = userAdminClient.getAccountBalance(createdUser.userId(), additionalAccount.getId());
 
-        // Перевод
-        accountClient.transfer(createdUser.authHeader(), createdUser.accountId(), account2.getId(), VALID_TRANSFER_AMOUNT);
+        transferSteps.transfer(createdUser.authHeader(), createdUser.accountId(), additionalAccount.getId(), VALID_TRANSFER_AMOUNT);
 
-        // Балансы после перевода
-        double balanceAfter1 = getBalance(createdUser.accountId());
-        double balanceAfter2 = getBalance(account2.getId());
+        // Получаем балансы после перевода
+        double balanceAfter1 = userAdminClient.getAccountBalance(createdUser.userId(), createdUser.accountId());
+        double balanceAfter2 = userAdminClient.getAccountBalance(createdUser.userId(), additionalAccount.getId());
 
         assertThat(balanceAfter1, equalTo(balanceBefore1 - VALID_TRANSFER_AMOUNT));
         assertThat(balanceAfter2, equalTo(balanceBefore2 + VALID_TRANSFER_AMOUNT));
     }
 
-    @ParameterizedTest(name = "Transfer {2} → ожидаем {1} и сообщение \"{3}\"")
-    @CsvSource({
-            "10001.0, 400, over max limit, Transfer amount cannot exceed " + MAX_TRANSFER_LIMIT,
-            "0.0, 400, zero amount, Invalid transfer: insufficient funds or invalid accounts",
-            "-50.0, 400, negative amount, Invalid transfer: insufficient funds or invalid accounts"
-    })
-    void shouldFailInvalidTransfers(double transferAmount, int expectedStatus, String caseName, String expectedMessage) {
-        createdUser = UserTestHelper.createUserWithAccount("USER");
-        var account2 = createSecondAccount();
+    @ParameterizedTest
+    @MethodSource("provideInvalidTransfers")
+    void shouldFailInvalidTransfers(double transferAmount, int expectedStatus, String expectedMessage) {
+        createdUser = UserTestHelper.createUserWithAccount(Role.USER);
+        var additionalAccount = accountSteps.createAccount(createdUser.authHeader());
 
-        Response response = accountClient.transferRaw(createdUser.authHeader(), createdUser.accountId(), account2.getId(), transferAmount);
+        Response response = transferSteps.transferRaw(
+                createdUser.authHeader(),
+                createdUser.accountId(),
+                additionalAccount.getId(),
+                transferAmount
+        );
 
         assertThat(response.getStatusCode(), equalTo(expectedStatus));
         assertThat(response.getBody().asString(), equalTo(expectedMessage));
     }
 
+    private static Stream<Arguments> provideInvalidTransfers() {
+        return Stream.of(
+                Arguments.of(
+                        OVER_MAX_TRANSFER,
+                        HttpStatus.SC_BAD_REQUEST,
+                        String.format(TRANSFER_AMOUNT_EXCEED_TEMPLATE, MAX_TRANSFER_LIMIT)
+                ),
+                Arguments.of(ZERO_TRANSFER, HttpStatus.SC_BAD_REQUEST, INVALID_TRANSFER_MESSAGE),
+                Arguments.of(NEGATIVE_TRANSFER, HttpStatus.SC_BAD_REQUEST, INVALID_TRANSFER_MESSAGE)
+        );
+    }
+
     @Test
     void shouldFailTransferToSameAccount() {
-        createdUser = UserTestHelper.createUserWithAccount("USER");
+        createdUser = UserTestHelper.createUserWithAccount(Role.USER);
 
-        Response response = accountClient.transferRaw(createdUser.authHeader(), createdUser.accountId(), createdUser.accountId(), VALID_TRANSFER_AMOUNT);
+        Response response = transferSteps.transferRaw(
+                createdUser.authHeader(),
+                createdUser.accountId(),
+                createdUser.accountId(),
+                VALID_TRANSFER_AMOUNT
+        );
 
-        assertThat(response.getStatusCode(), equalTo(400));
-        assertThat(response.getBody().asString(), equalTo("Invalid transfer: insufficient funds or invalid accounts"));
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.SC_BAD_REQUEST));
+        assertThat(response.getBody().asString(), equalTo(INVALID_TRANSFER_MESSAGE));
     }
 
     @Test
     void shouldFailTransferWithoutAuthorization() {
-        createdUser = UserTestHelper.createUserWithAccount("USER");
-        var account2 = createSecondAccount();
+        createdUser = UserTestHelper.createUserWithAccount(Role.USER);
+        var additionalAccount = accountSteps.createAccount(createdUser.authHeader());
 
-        Response response = accountClient.transferRaw(null, createdUser.accountId(), account2.getId(), VALID_TRANSFER_AMOUNT);
+        Response response = transferSteps.transferRaw(
+                null,
+                createdUser.accountId(),
+                additionalAccount.getId(),
+                VALID_TRANSFER_AMOUNT
+        );
 
-        assertThat(response.getStatusCode(), equalTo(401));
-        assertThat(response.getBody().asString(), equalTo(""));
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.SC_UNAUTHORIZED));
+        assertThat(response.getBody().asString(), equalTo(EMPTY_RESPONSE_MESSAGE));
     }
 
     @Test
     void shouldFailTransferToNonexistentAccount() {
-        createdUser = UserTestHelper.createUserWithAccount("USER");
+        createdUser = UserTestHelper.createUserWithAccount(Role.USER);
 
-        Response response = accountClient.transferRaw(createdUser.authHeader(), createdUser.accountId(), NON_EXISTENT_ACCOUNT, VALID_TRANSFER_AMOUNT);
+        Response response = transferSteps.transferRaw(
+                createdUser.authHeader(),
+                createdUser.accountId(),
+                NON_EXISTENT_ACCOUNT,
+                VALID_TRANSFER_AMOUNT
+        );
 
-        assertThat(response.getStatusCode(), equalTo(400));
-        assertThat(response.getBody().asString(), equalTo("Invalid transfer: insufficient funds or invalid accounts"));
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.SC_BAD_REQUEST));
+        assertThat(response.getBody().asString(), equalTo(INVALID_TRANSFER_MESSAGE));
     }
 
     @Test
     void shouldFailTransferFromNonexistentAccount() {
-        createdUser = UserTestHelper.createUserWithAccount("USER");
-        var account2 = createSecondAccount();
+        createdUser = UserTestHelper.createUserWithAccount(Role.USER);
+        var additionalAccount = accountSteps.createAccount(createdUser.authHeader());
 
-        Response response = accountClient.transferRaw(createdUser.authHeader(), NON_EXISTENT_ACCOUNT, account2.getId(), VALID_TRANSFER_AMOUNT);
+        Response response = transferSteps.transferRaw(
+                createdUser.authHeader(),
+                NON_EXISTENT_ACCOUNT,
+                additionalAccount.getId(),
+                VALID_TRANSFER_AMOUNT
+        );
 
-        assertThat(response.getStatusCode(), equalTo(403));
-        assertThat(response.getBody().asString(), equalTo("Unauthorized access to account"));
-    }
-
-    // Хелперы
-    private AccountResponse createSecondAccount() {
-        return accountClient.createAccount(createdUser.authHeader());
-    }
-
-    private void deposit(Long accountId, double amount) {
-        accountClient.deposit(createdUser.authHeader(), DepositRequest.builder()
-                .id(accountId)
-                .balance(amount)
-                .build());
-    }
-
-    private double getBalance(Long accountId) {
-        return accountClient.getAccount(createdUser.authHeader(), accountId).getBalance();
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.SC_FORBIDDEN));
+        assertThat(response.getBody().asString(), equalTo(UNAUTHORIZED_ACCESS_MESSAGE));
     }
 }

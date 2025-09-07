@@ -2,77 +2,99 @@ package Ivancompany.nbanktest.api.clients;
 
 import Ivancompany.nbanktest.api.dto.request.CreateUserRequest;
 import Ivancompany.nbanktest.api.dto.response.UserResponse;
+import Ivancompany.nbanktest.core.specs.RequestSpecs;
+import Ivancompany.nbanktest.core.specs.ResponseSpecs;
 import io.restassured.response.Response;
-import Ivancompany.nbanktest.core.config.TestConfig;
 
 import java.util.Arrays;
 
-public class UserAdminClient extends BaseClient {
+import static io.restassured.RestAssured.given;
+
+public class UserAdminClient {
 
     public UserResponse createUser(CreateUserRequest userRequest) {
-        Response response = request(TestConfig.ADMIN_AUTH)
+        return given()
+                .spec(RequestSpecs.adminSpec())
                 .body(userRequest)
                 .when()
                 .post("/admin/users")
                 .then()
+                .spec(ResponseSpecs.created())
                 .extract()
-                .response();
+                .as(UserResponse.class);
+    }
 
-        if (response.statusCode() != 201) {
-            throw new RuntimeException("Не удалось создать пользователя. Статус: "
-                    + response.statusCode() + ", ответ: " + response.asString());
-        }
-
-        return response.as(UserResponse.class);
+    public Response createUserRaw(CreateUserRequest userRequest) {
+        return given()
+                .spec(RequestSpecs.adminSpec())
+                .body(userRequest)
+                .when()
+                .post("/admin/users");
     }
 
     public void deleteUser(Long userId) {
-        Response response = request(TestConfig.ADMIN_AUTH)
+        given()
+                .spec(RequestSpecs.adminSpec())
                 .when()
                 .delete("/admin/users/" + userId)
                 .then()
-                .extract()
-                .response();
+                .spec(ResponseSpecs.ok());
+    }
 
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("Не удалось удалить пользователя. Статус: "
-                    + response.statusCode() + ", ответ: " + response.asString());
-        }
+    public Response deleteUserRaw(Long userId) {
+        return given()
+                .spec(RequestSpecs.adminSpec())
+                .when()
+                .delete("/admin/users/" + userId);
     }
 
     public UserResponse[] getAllUsers() {
-        Response response = request(TestConfig.ADMIN_AUTH)
+        return given()
+                .spec(RequestSpecs.adminSpec())
                 .when()
                 .get("/admin/users")
                 .then()
+                .spec(ResponseSpecs.ok())
                 .extract()
-                .response();
-
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("Не удалось получить пользователей. Статус: "
-                    + response.statusCode() + ", ответ: " + response.asString());
-        }
-
-        return response.as(UserResponse[].class);
+                .as(UserResponse[].class);
     }
 
+    public Response getAllUsersRaw() {
+        return given()
+                .spec(RequestSpecs.adminSpec())
+                .when()
+                .get("/admin/users");
+    }
+
+    // Вспомогательные методы
     public UserResponse getUserById(Long userId) {
         return Arrays.stream(getAllUsers())
                 .filter(user -> user.getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Пользователь с id " + userId + " не найден"));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("Пользователь с id %d не найден", userId)
+                ));
     }
 
-    /**
-     * Возвращает баланс конкретного аккаунта пользователя.
-     */
     public double getAccountBalance(Long userId, Long accountId) {
         UserResponse user = getUserById(userId);
 
         return user.getAccounts().stream()
                 .filter(acc -> acc.getId().equals(accountId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Аккаунт с id " + accountId + " не найден у пользователя " + userId))
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("Аккаунт с id %d не найден у пользователя %d", accountId, userId)
+                ))
                 .getBalance();
+    }
+
+    // Новый метод для получения профиля пользователя по ID
+    public UserResponse getProfile(Long userId) {
+        return Arrays.stream(getAllUsers())
+                .filter(user -> user.getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("Пользователь с id %d не найден", userId)
+                ));
     }
 }

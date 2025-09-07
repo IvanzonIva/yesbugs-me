@@ -4,6 +4,7 @@ import Ivancompany.nbanktest.api.dto.request.DepositRequest;
 import Ivancompany.nbanktest.api.dto.request.TransferRequest;
 import Ivancompany.nbanktest.api.dto.response.AccountResponse;
 import Ivancompany.nbanktest.api.dto.response.TransferResponse;
+import Ivancompany.nbanktest.core.specs.ResponseSpecs;
 import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
@@ -16,9 +17,21 @@ public class AccountClient {
                 .when()
                 .post("/accounts")
                 .then()
-                .statusCode(201)
+                .spec(ResponseSpecs.created())
                 .extract()
                 .as(AccountResponse.class);
+    }
+
+    public Response createAccountRaw(String authHeader) {
+        var request = given();
+
+        if (authHeader != null) {
+            request.header("Authorization", authHeader);
+        }
+
+        return request
+                .when()
+                .post("/accounts");
     }
 
     public AccountResponse deposit(String authHeader, DepositRequest depositRequest) {
@@ -29,7 +42,7 @@ public class AccountClient {
                 .when()
                 .post("/accounts/deposit")
                 .then()
-                .statusCode(200)
+                .spec(ResponseSpecs.ok())
                 .extract()
                 .as(AccountResponse.class);
     }
@@ -48,18 +61,6 @@ public class AccountClient {
                 .post("/accounts/deposit");
     }
 
-    public AccountResponse getAccount(String authHeader, Long accountId) {
-        return given()
-                .header("Authorization", authHeader)
-                .when()
-                .get("/accounts/" + accountId)
-                .then()
-                .statusCode(200)
-                .extract()
-                .as(AccountResponse.class);
-    }
-
-    // Метод для успешного перевода с десериализацией TransferResponse
     public TransferResponse transfer(String authHeader, Long senderId, Long receiverId, Double amount) {
         TransferRequest request = TransferRequest.builder()
                 .senderAccountId(senderId)
@@ -74,12 +75,11 @@ public class AccountClient {
                 .when()
                 .post("/accounts/transfer")
                 .then()
-                .statusCode(200)
+                .spec(ResponseSpecs.ok())
                 .extract()
                 .as(TransferResponse.class);
     }
 
-    // Метод для негативных сценариев — не проверяет статус
     public Response transferRaw(String authHeader, Long senderId, Long receiverId, Double amount) {
         TransferRequest request = TransferRequest.builder()
                 .senderAccountId(senderId)

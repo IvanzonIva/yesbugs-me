@@ -1,6 +1,7 @@
 package Ivancompany.nbanktest.api.clients;
 
 import Ivancompany.nbanktest.api.dto.request.LoginRequest;
+import Ivancompany.nbanktest.core.specs.ResponseSpecs;
 import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
@@ -12,13 +13,20 @@ public class AuthClient {
                 .header("Content-Type", "application/json")
                 .body(loginRequest)
                 .when()
-                .post("/api/v1/auth/login") // путь к эндпоинту
+                .post("/auth/login")
                 .then()
-                .statusCode(200)
+                .spec(ResponseSpecs.ok())
                 .extract()
                 .response();
 
-        // Берём токен из заголовка Authorization
         return response.getHeader("Authorization");
+    }
+
+    public Response loginRaw(LoginRequest loginRequest) {
+        return given()
+                .header("Content-Type", "application/json")
+                .body(loginRequest)
+                .when()
+                .post("/auth/login");
     }
 }

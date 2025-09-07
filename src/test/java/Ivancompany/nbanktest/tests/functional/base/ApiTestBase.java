@@ -4,26 +4,27 @@ import Ivancompany.nbanktest.api.clients.AccountClient;
 import Ivancompany.nbanktest.api.clients.AuthClient;
 import Ivancompany.nbanktest.api.clients.UserAdminClient;
 import Ivancompany.nbanktest.core.config.TestConfig;
-import io.qameta.allure.restassured.AllureRestAssured;
+import Ivancompany.nbanktest.core.services.UserTestService;
 import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 
 public class ApiTestBase {
-    protected UserAdminClient userAdminClient;
-    protected AuthClient authClient;
-    protected AccountClient accountClient;
+    protected static UserAdminClient userAdminClient;
+    protected static AuthClient authClient;
+    protected static AccountClient accountClient;
+    protected static UserTestService userTestService;
 
-    @BeforeEach
-    void setUpApi() {
-        // Устанавливаем базовый URL для RestAssured
+    @BeforeAll
+    static void setUpApi() {
+        // Устанавливаем базовый URL для RestAssured (один раз для всех тестов)
         RestAssured.baseURI = TestConfig.BASE_URL;
 
-        // Подключаем Allure фильтр для логирования запросов и ответов
-        RestAssured.filters(new AllureRestAssured());
-
-        // Инициализация клиентов
+        // Инициализация клиентов (один раз для всех тестов)
         userAdminClient = new UserAdminClient();
         authClient = new AuthClient();
         accountClient = new AccountClient();
+
+        // Инициализация сервиса
+        userTestService = new UserTestService(userAdminClient);
     }
 }

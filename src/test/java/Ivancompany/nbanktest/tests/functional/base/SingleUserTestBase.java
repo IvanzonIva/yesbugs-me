@@ -2,11 +2,12 @@ package Ivancompany.nbanktest.tests.functional.base;
 
 import Ivancompany.nbanktest.api.dto.request.CreateUserRequest;
 import Ivancompany.nbanktest.api.dto.response.UserResponse;
+import Ivancompany.nbanktest.core.models.Role;
 import Ivancompany.nbanktest.core.utils.AuthHelper;
 import Ivancompany.nbanktest.core.utils.DataGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-// Добавьте эти импорты
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,12 +29,12 @@ public class SingleUserTestBase extends ApiTestBase {
         CreateUserRequest userRequest = CreateUserRequest.builder()
                 .username(username)
                 .password(password)
-                .role("USER")
+                .role(Role.USER)
                 .build();
 
         UserResponse userResponse = userAdminClient.createUser(userRequest);
         userId = userResponse.getId();
-        createdUserIds.add(userId); // сохраняем для удаления
+        createdUserIds.add(userId);
 
         userAuthHeader = AuthHelper.generateBasicAuthHeader(username, password);
 
@@ -43,24 +44,13 @@ public class SingleUserTestBase extends ApiTestBase {
 
     @AfterEach
     void deleteTestUsers() {
-        List<Long> failedDeletions = new ArrayList<>();
-
-        for (Long id : createdUserIds) {
-            try {
-                userAdminClient.deleteUser(id);
-            } catch (Exception e) {
-                failedDeletions.add(id);
-                // Логируем ошибку, но не прерываем выполнение
-                System.err.println("Failed to delete user " + id + ": " + e.getMessage());
-            }
-        }
-
+        // Используем сервисный класс для удаления пользователей
+        userTestService.safelyDeleteUsers(createdUserIds);
         createdUserIds.clear();
-        createdUserIds.addAll(failedDeletions); // сохраняем неудаленные ID для возможной повторной попытки
     }
 
     // Метод для создания дополнительных пользователей в тестах-наследниках
-    protected UserTestData createAdditionalUser(String role) {
+    protected UserTestData createAdditionalUser(Role role) {
         String newUsername = DataGenerator.generateValidUsername();
         String newPassword = DataGenerator.generateValidPassword();
 

@@ -44,7 +44,7 @@ public class DataGenerator {
         return faker.name().fullName();
     }
 
-    // ====== СУММЫ ДЛЯ ТЕСТОВ ======
+    // Суммы для тестов
     public static Double generateAmount() {
         return faker.number().randomDouble(2, 10, 1000);
     }

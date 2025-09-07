@@ -1,5 +1,6 @@
 package Ivancompany.nbanktest.api.dto.request;
 
+import Ivancompany.nbanktest.core.models.Role;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,5 +9,5 @@ import lombok.Data;
 public class CreateUserRequest {
     private String username;
     private String password;
-    private String role;
+    private Role role;
 }

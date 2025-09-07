@@ -4,12 +4,13 @@ import Ivancompany.nbanktest.api.clients.AccountClient;
 import Ivancompany.nbanktest.api.clients.UserAdminClient;
 import Ivancompany.nbanktest.api.dto.request.CreateUserRequest;
 import Ivancompany.nbanktest.api.dto.response.UserResponse;
+import Ivancompany.nbanktest.core.models.Role;
 
 public class UserTestHelper {
     private static final UserAdminClient userAdminClient = new UserAdminClient();
     private static final AccountClient accountClient = new AccountClient();
 
-    public static UserTestData createUserWithAccount(String role) {
+    public static UserTestData createUserWithAccount(Role role) {
         try {
             String username = DataGenerator.generateValidUsername();
             String password = DataGenerator.generateValidPassword();

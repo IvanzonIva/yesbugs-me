@@ -14,8 +14,4 @@ public class AuthHelper {
             return "Basic " + encoded;
         });
     }
-
-    // Можно добавить метод для очистки кеша при необходимости
-    // public static void clearCache() {
-    //    tokenCache.clear();}
 }
