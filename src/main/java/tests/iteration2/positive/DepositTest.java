@@ -4,6 +4,7 @@ import io.restassured.response.ValidatableResponse;
 import models.CreateUserRequest;
 import models.DepositRequest;
 import models.DepositResponse;
+import models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
 import requests.steps.AdminSteps;
 import requests.steps.UserSteps;
@@ -32,9 +33,10 @@ public class DepositTest extends BaseTest {
 
         double accountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountId);
-
-        softly.assertThat(makeDeposit.getBalance()).isEqualTo(responseModel.getBalance());
-        softly.assertThat(makeDeposit.getId()).isEqualTo(responseModel.getId());
+        // сравнение моделей вместо поштучных полей
+        ModelAssertions.assertThatModels(makeDeposit, responseModel)
+                .as("Поля запроса и ответа должны совпадать")
+                .match();
         softly.assertThat(accountBalanceBefore).isEqualTo(accountBalanceAfter - DEPOSIT_AMOUNT);
     }
 

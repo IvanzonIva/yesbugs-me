@@ -7,6 +7,7 @@ import requests.skelethon.requests.CrudRequesters;
 import requests.skelethon.requests.ValidatedCrudRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
+import io.restassured.specification.ResponseSpecification;
 
 public class UserSteps {
 
@@ -20,12 +21,13 @@ public class UserSteps {
     }
 
     public static DepositResponse Deposit(CreateUserRequest createdUserModel,
-                                          DepositRequest DepositRequest) {
-        return new CrudRequesters(RequestSpecs
-                .depositAsAuthUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
+                                          DepositRequest depositRequest,
+                                          ResponseSpecification responseSpec) {
+        return new CrudRequesters(
+                RequestSpecs.depositAsAuthUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
                 Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsOK())
-                .post(DepositRequest).extract().as(DepositResponse.class);
+                responseSpec
+        ).post(depositRequest).extract().as(DepositResponse.class);
     }
 
     public static TransferResponse makeTransfer(CreateUserRequest createdUserModel,
