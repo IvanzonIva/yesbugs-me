@@ -1,0 +1,114 @@
+package tests.api.iteration2.negative;
+
+import api.models.CreateUserRequest;
+import api.models.DepositRequest;
+import api.requests.skelethon.ErrorMessages;
+import api.requests.steps.AdminSteps;
+import api.specs.ResponseSpecs;
+import tests.api.iteration1.BaseTest;
+import api.utils.AccountBalanceUtils;
+import api.utils.TestDataFactory;
+import io.restassured.response.ValidatableResponse;
+import org.junit.jupiter.api.Test;
+import api.requests.steps.UserSteps;
+
+public class DepositNegativeTest extends BaseTest {
+    private static final long NOT_EXISTING_ACCOUNT_ID = 6969;
+    public static final double DEPOSIT_AMOUNT = 100.00;
+    public static final double NEGATIVE_DEPOSIT_AMOUNT = -99.00;
+    public static final double ZERO_DEPOSIT_AMOUNT = 0.00;
+
+    @Test
+    public void userCannotDepositToAnotherUserAccount() {
+        CreateUserRequest createdUser1 = TestDataFactory.createUserModel();
+        CreateUserRequest createdUser2 = TestDataFactory.createUserModel();
+
+        AdminSteps.createUser(createdUser1);
+        AdminSteps.createUser(createdUser2);
+
+        ValidatableResponse createAccountResponse1 = UserSteps.createAccount(createdUser1);
+        long accountIdOne = UserSteps.getAccountID(createAccountResponse1);
+
+        ValidatableResponse createAccountResponse2 = UserSteps.createAccount(createdUser2);
+        long accountIdTwo = UserSteps.getAccountID(createAccountResponse2);
+
+        DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountIdTwo, DEPOSIT_AMOUNT);
+
+        double senderBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
+                createdUser1.getUsername(), createdUser1.getPassword(), accountIdOne);
+
+        UserSteps.Deposit(createdUser1, makeDeposit,
+                ResponseSpecs.requestReturnsForbidden(ErrorMessages.UNAUTHORIZED_ACCESS.getMessage()));
+
+        double senderBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
+                createdUser1.getUsername(), createdUser1.getPassword(), accountIdOne);
+
+        softly.assertThat(senderBalanceBefore).isEqualTo(senderBalanceAfter);
+    }
+
+    @Test
+    public void userCannotDepositToNotExistingUserAccountId() {
+        CreateUserRequest createdUser = TestDataFactory.createUserModel();
+        AdminSteps.createUser(createdUser);
+
+        ValidatableResponse createAccountResponse = UserSteps.createAccount(createdUser);
+        long accountId = UserSteps.getAccountID(createAccountResponse);
+
+        DepositRequest makeDeposit = TestDataFactory.createDepositModel(NOT_EXISTING_ACCOUNT_ID, DEPOSIT_AMOUNT);
+
+        double balanceBefore = AccountBalanceUtils.getBalanceForAccount(
+                createdUser.getUsername(), createdUser.getPassword(), accountId);
+
+        UserSteps.Deposit(createdUser, makeDeposit,
+                ResponseSpecs.requestReturnsForbidden(ErrorMessages.UNAUTHORIZED_ACCESS.getMessage()));
+
+        double balanceAfter = AccountBalanceUtils.getBalanceForAccount(
+                createdUser.getUsername(), createdUser.getPassword(), accountId);
+
+        softly.assertThat(balanceBefore).isEqualTo(balanceAfter);
+    }
+
+    @Test
+    public void userCannotMakeNegativeDeposit() {
+        CreateUserRequest createdUser = TestDataFactory.createUserModel();
+        AdminSteps.createUser(createdUser);
+
+        ValidatableResponse createAccountResponse = UserSteps.createAccount(createdUser);
+        long accountId = UserSteps.getAccountID(createAccountResponse);
+
+        DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountId, NEGATIVE_DEPOSIT_AMOUNT);
+
+        double balanceBefore = AccountBalanceUtils.getBalanceForAccount(
+                createdUser.getUsername(), createdUser.getPassword(), accountId);
+
+        UserSteps.Deposit(createdUser, makeDeposit,
+                ResponseSpecs.requestReturnsBadRequest(ErrorMessages.INVALID_ACCOUNT_OR_AMOUNT.getMessage()));
+
+        double balanceAfter = AccountBalanceUtils.getBalanceForAccount(
+                createdUser.getUsername(), createdUser.getPassword(), accountId);
+
+        softly.assertThat(balanceBefore).isEqualTo(balanceAfter);
+    }
+
+    @Test
+    public void userCannotMakeZeroDeposit() {
+        CreateUserRequest createdUser = TestDataFactory.createUserModel();
+        AdminSteps.createUser(createdUser);
+
+        ValidatableResponse createAccountResponse = UserSteps.createAccount(createdUser);
+        long accountId = UserSteps.getAccountID(createAccountResponse);
+
+        DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountId, ZERO_DEPOSIT_AMOUNT);
+
+        double balanceBefore = AccountBalanceUtils.getBalanceForAccount(
+                createdUser.getUsername(), createdUser.getPassword(), accountId);
+
+        UserSteps.Deposit(createdUser, makeDeposit,
+                ResponseSpecs.requestReturnsBadRequest(ErrorMessages.INVALID_ACCOUNT_OR_AMOUNT.getMessage()));
+
+        double balanceAfter = AccountBalanceUtils.getBalanceForAccount(
+                createdUser.getUsername(), createdUser.getPassword(), accountId);
+
+        softly.assertThat(balanceBefore).isEqualTo(balanceAfter);
+    }
+}
