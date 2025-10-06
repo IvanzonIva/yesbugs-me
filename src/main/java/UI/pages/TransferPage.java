@@ -3,6 +3,7 @@ package UI.pages;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
+import api.utils.RetryUtils;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
@@ -27,11 +28,48 @@ public class TransferPage extends UserDashbord{
     }
 
     public TransferPage selectSenderAccount(String accountName){
-        senderAccountDropDown.get(0).click();
-        senderAccountDropDown.stream()
-                .filter(option -> option.getText().contains(accountName))
-                .findFirst().get().click();
-        return this;
+        return RetryUtils.retry(
+                () -> {
+                    try {
+                        System.out.println("🔍 Searching for account: " + accountName);
+
+                        // Убеждаемся, что элементы загружены
+                        if (senderAccountDropDown.isEmpty()) {
+                            System.out.println("❌ No accounts found in dropdown");
+                            return null;
+                        }
+
+                        // Кликаем на первый элемент чтобы открыть dropdown
+                        senderAccountDropDown.get(0).click();
+
+                        // Ищем нужный аккаунт
+                        var accountOption = senderAccountDropDown.stream()
+                                .filter(option -> {
+                                    String optionText = option.getText();
+                                    boolean matches = optionText.contains(accountName);
+                                    System.out.println("   Comparing: '" + optionText + "' with '" + accountName + "' -> " + matches);
+                                    return matches;
+                                })
+                                .findFirst();
+
+                        if (accountOption.isPresent()) {
+                            accountOption.get().click();
+                            System.out.println("✅ Successfully selected account: " + accountName);
+                            return this;
+                        } else {
+                            System.out.println("❌ Account not found: " + accountName);
+                            return null;
+                        }
+
+                    } catch (Exception e) {
+                        System.out.println("💥 Exception while selecting account: " + e.getMessage());
+                        return null;
+                    }
+                },
+                result -> result != null,
+                3,
+                2000
+        );
     }
 
     public TransferPage enterRecipientName(String name){

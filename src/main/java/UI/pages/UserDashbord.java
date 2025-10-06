@@ -49,7 +49,21 @@ public class UserDashbord extends BasePage<UserDashbord> {
 
     public UserDashbord checkAlertAndAccept(String bankAlert) {
         Alert alert = switchTo().alert();
-        assertThat(alert.getText()).contains(bankAlert);
+        String actualText = alert.getText();
+
+        // 🔍 Выведем в лог для отладки
+        System.out.println("Actual alert:   " + actualText);
+        System.out.println("Expected alert: " + bankAlert);
+
+        // 🔧 Приводим оба текста к единому формату с точкой
+        String normalizedActual = actualText.replace(",", ".");
+        String normalizedExpected = bankAlert.replace(",", ".");
+
+        // 🔒 Сравниваем строго, как ты хотел
+        assertThat(normalizedActual)
+                .as("Alert text mismatch")
+                .isEqualTo(normalizedExpected);
+
         alert.accept();
         return this;
     }

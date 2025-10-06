@@ -33,7 +33,7 @@ public class DepositNegativeUiTest extends BaseUiTest {
                 .selectAccount(account.getAccountNumber())
                 .enterAmount(invalidAmount.doubleValue())
                 .clickDeposit()
-                .checkAlertAndAccept("Deposit amount must be less than or equal to 5000");
+                .checkAlertAndAccept("❌ Please deposit less or equal to 5000$.");
 
         // Проверяем через API, что баланс НЕ изменился
         List<CreateAccountResponse> accountsAfterDeposit = SessionStorage.getSteps().getAllAccounts();
@@ -62,7 +62,7 @@ public class DepositNegativeUiTest extends BaseUiTest {
                 // Пропускаем selectAccount - аккаунт не выбран
                 .enterAmount(validAmount.doubleValue())
                 .clickDeposit()
-                .checkAlertAndAccept("Please select an account");
+                .checkAlertAndAccept("❌ Please select an account.");
 
         // Проверяем через API, что баланс НЕ изменился
         List<CreateAccountResponse> accountsAfterDeposit = SessionStorage.getSteps().getAllAccounts();
@@ -88,7 +88,7 @@ public class DepositNegativeUiTest extends BaseUiTest {
                 .selectAccount(account.getAccountNumber())
                 // Пропускаем enterAmount - поле суммы пустое
                 .clickDeposit()
-                .checkAlertAndAccept("Please enter a valid amount");
+                .checkAlertAndAccept("❌ Please enter a valid amount.");
 
         // Проверяем через API, что баланс НЕ изменился
         List<CreateAccountResponse> accountsAfterDeposit = SessionStorage.getSteps().getAllAccounts();
@@ -114,7 +114,7 @@ public class DepositNegativeUiTest extends BaseUiTest {
                 .selectAccount(account.getAccountNumber())
                 .enterAmount(0.0)
                 .clickDeposit()
-                .checkAlertAndAccept("Please enter a valid amount");
+                .checkAlertAndAccept("❌ Please enter a valid amount.");
 
         // Проверяем через API, что баланс НЕ изменился
         List<CreateAccountResponse> accountsAfterDeposit = SessionStorage.getSteps().getAllAccounts();
@@ -143,7 +143,7 @@ public class DepositNegativeUiTest extends BaseUiTest {
                 .selectAccount(account.getAccountNumber())
                 .enterAmount(negativeAmount.doubleValue())
                 .clickDeposit()
-                .checkAlertAndAccept("Please enter a valid amount");
+                .checkAlertAndAccept("❌ Please enter a valid amount.");
 
         // Проверяем через API, что баланс НЕ изменился
         List<CreateAccountResponse> accountsAfterDeposit = SessionStorage.getSteps().getAllAccounts();
@@ -176,7 +176,7 @@ public class DepositNegativeUiTest extends BaseUiTest {
                 .selectAccount(secondAccount.getAccountNumber())
                 .enterAmount(depositAmount.doubleValue())
                 .clickDeposit()
-                .checkAlertAndAccept(String.format("Successfully deposited $%s to account %s!",
+                .checkAlertAndAccept(String.format("✅ Successfully deposited $%s to account %s!",
                         depositAmount, secondAccount.getAccountNumber()));
 
         // Проверяем через API, что баланс второго аккаунта увеличился

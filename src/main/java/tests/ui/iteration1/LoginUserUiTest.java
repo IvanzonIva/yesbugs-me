@@ -9,7 +9,7 @@ import com.codeborne.selenide.Condition;
 import common.annotation.Browsers;
 import org.junit.jupiter.api.Test;
 
-public class LoginUserTest extends BaseUiTest {
+public class LoginUserUiTest extends BaseUiTest {
 
     @Test
     @Browsers({"chrome"})

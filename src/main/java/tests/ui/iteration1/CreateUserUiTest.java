@@ -1,5 +1,6 @@
 package tests.ui.iteration1;
 
+import UI.elements.UserBage;
 import UI.pages.AdminPanel;
 import UI.pages.BankAlert;
 import api.models.CreateUserRequest;
@@ -14,16 +15,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-public class CreateUserTest extends BaseUiTest {
+public class CreateUserUiTest extends BaseUiTest {
 
     @Test
 @AdminSession // Junit Extension
     public void adminCanCreateUserTest() {
         CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
 
-        assertTrue(new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
+        UserBage newUserBage = new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
                 .checkAlertMessageAndAccept(BankAlert.USER_CREATED_SUCCESSFULLY.getMessage())
-                .getAllUsers().stream().anyMatch(userBage -> userBage.getUsername().equals(newUser.getUsername())));
+                .findUserByUsername(newUser.getUsername());
+
+        assertThat(newUserBage)
+                .as("UserBage should exist on Dashbord after user creation").isNotNull();
 
         CreateUserResponse createdUser = AdminSteps.getAllUsers().stream()
                 .filter(user -> user.getUsername().equals(newUser.getUsername()))

@@ -5,6 +5,7 @@ import io.restassured.specification.ResponseSpecification;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 
+import java.util.Arrays;
 
 public class ResponseSpecs {
     private ResponseSpecs() {}
@@ -38,6 +39,22 @@ public class ResponseSpecs {
                 .build();
     }
 
+    // Новый метод для проверки массива ошибок с точным порядком
+    public static ResponseSpecification requestReturnsBadRequest(String errorKey, String[] expectedMessages) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_BAD_REQUEST)
+                .expectBody(errorKey, Matchers.contains(expectedMessages))
+                .build();
+    }
+
+    // Новый метод для проверки массива ошибок без учета порядка
+    public static ResponseSpecification requestReturnsBadRequestAnyOrder(String errorKey, String[] expectedMessages) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_BAD_REQUEST)
+                .expectBody(errorKey, Matchers.containsInAnyOrder(expectedMessages))
+                .build();
+    }
+
     public static ResponseSpecification requestReturnsBadRequest(String errorValue) {
         return defaultResponseBuilder()
                 .expectStatusCode(HttpStatus.SC_BAD_REQUEST)
@@ -52,5 +69,13 @@ public class ResponseSpecs {
                 .build();
     }
 
+    // Дополнительные методы для удобства
 
+    public static ResponseSpecification requestReturnsBadRequest(String errorKey, java.util.List<String> expectedMessages) {
+        return requestReturnsBadRequest(errorKey, expectedMessages.toArray(new String[0]));
+    }
+
+    public static ResponseSpecification requestReturnsBadRequestAnyOrder(String errorKey, java.util.List<String> expectedMessages) {
+        return requestReturnsBadRequestAnyOrder(errorKey, expectedMessages.toArray(new String[0]));
+    }
 }
