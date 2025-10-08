@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -24,9 +25,12 @@
         <allure.version>2.29.0</allure.version>
         <hamcrest.version>2.2</hamcrest.version>
         <surefire.version>3.5.2</surefire.version>
+        <selenide.version>7.9.1</selenide.version>
         <failsafe.version>3.5.2</failsafe.version>
         <compiler.version>3.13.0</compiler.version>
         <allure.maven.version>2.12.0</allure.maven.version>
+        <aspectj.version>1.9.22</aspectj.version>
+        <junit.platform.version>1.11.4</junit.platform.version>
     </properties>
 
     <dependencyManagement>
@@ -39,7 +43,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <!-- Allure BOM -->
             <dependency>
                 <groupId>io.qameta.allure</groupId>
@@ -64,11 +67,11 @@
             <artifactId>junit-jupiter-params</artifactId>
         </dependency>
 
-        <!-- ✅ JUnit Platform Suite (для @Suite и @SelectClasses) -->
+        <!-- JUnit Platform Suite -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
-            <version>1.11.4</version>
+            <version>${junit.platform.version}</version>
         </dependency>
 
         <!-- RestAssured -->
@@ -76,6 +79,13 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <version>${rest-assured.version}</version>
+        </dependency>
+
+        <!-- Selenide -->
+        <dependency>
+            <groupId>com.codeborne</groupId>
+            <artifactId>selenide</artifactId>
+            <version>${selenide.version}</version>
         </dependency>
 
         <!-- Lombok -->
@@ -159,7 +169,7 @@
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
-            <version>${hamcrest.version}</version>>
+            <version>${hamcrest.version}</version>
         </dependency>
 
         <!-- Apache Commons Lang -->
@@ -168,24 +178,19 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.14.0</version>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>compile</scope>
-        </dependency>
+
+        <!-- RGXGen -->
         <dependency>
             <groupId>com.github.curious-odd-man</groupId>
             <artifactId>rgxgen</artifactId>
             <version>1.3</version>
         </dependency>
+
+        <!-- AspectJ Weaver -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-engine</artifactId>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
         </dependency>
     </dependencies>
 
@@ -199,7 +204,7 @@
                 <configuration>
                     <useModulePath>false</useModulePath>
                     <argLine>
-                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22/aspectjweaver-1.9.22.jar"
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                         --enable-preview
                     </argLine>
                     <systemPropertyVariables>
@@ -217,7 +222,7 @@
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
-                        <version>1.9.22</version>
+                        <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -250,7 +255,7 @@
                 <configuration>
                     <useModulePath>false</useModulePath>
                     <argLine>
-                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22/aspectjweaver-1.9.22.jar"
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                         --enable-preview
                     </argLine>
                     <systemPropertyVariables>
@@ -267,7 +272,7 @@
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
-                        <version>1.9.22</version>
+                        <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
                 <executions>
