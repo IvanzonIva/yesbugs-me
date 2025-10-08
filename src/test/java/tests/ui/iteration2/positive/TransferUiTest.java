@@ -8,11 +8,10 @@ import api.utils.TestDataFactory;
 import common.annotation.AccountSession;
 import common.annotation.UserSession;
 import org.junit.jupiter.api.Test;
-import tests.SessionStorage;
+import common.storage.SessionStorage;
 import tests.ui.iteration1.BaseUiTest;
 
 import java.util.List;
-import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,7 +110,7 @@ public class TransferUiTest extends BaseUiTest {
                 .clickConfirm()
                 .cickSendTransfer()
                 .checkAlertAndAccept(String.format(
-                        "Successfully transferred $%.2f to account %s!",
+                        "✅ Successfully transferred $%s to account %s!",
                         transferAmount, receiverAccount.getAccountNumber()
                 ));
 

@@ -299,6 +299,99 @@
         </plugins>
     </build>
 
+    <!-- ДОБАВЛЕННЫЕ ПРОФИЛИ ДЛЯ ЭКСПЕРИМЕНТА -->
+    <profiles>
+        <!-- Профиль для API тестов (8 потоков) -->
+        <profile>
+            <id>api-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <includes>
+                                <include>**/api/**/*Test.java</include>
+                                <include>**/*ApiTest.java</include>
+                                <include>**/*Test.java</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/ui/**/*Test.java</exclude>
+                                <exclude>**/*UiTest.java</exclude>
+                            </excludes>
+                            <parallel>methods</parallel>
+                            <threadCount>8</threadCount>
+                            <useUnlimitedThreads>false</useUnlimitedThreads>
+                            <perCoreThreadCount>false</perCoreThreadCount>
+                            <systemPropertyVariables>
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
+                                <junit.jupiter.execution.parallel.config.fixed.parallelism>8</junit.jupiter.execution.parallel.config.fixed.parallelism>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Профиль для UI тестов (3 потока) -->
+        <profile>
+            <id>ui-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <includes>
+                                <include>**/ui/**/*Test.java</include>
+                                <include>**/*UiTest.java</include>
+                            </includes>
+                            <parallel>classes</parallel>
+                            <threadCount>3</threadCount>
+                            <useUnlimitedThreads>false</useUnlimitedThreads>
+                            <perCoreThreadCount>false</perCoreThreadCount>
+                            <systemPropertyVariables>
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
+                                <junit.jupiter.execution.parallel.config.fixed.parallelism>3</junit.jupiter.execution.parallel.config.fixed.parallelism>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Профиль для всех тестов (стандартная конфигурация) -->
+        <profile>
+            <id>all-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <parallel>methods</parallel>
+                            <threadCount>5</threadCount>
+                            <useUnlimitedThreads>false</useUnlimitedThreads>
+                            <systemPropertyVariables>
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
+                                <junit.jupiter.execution.parallel.config.fixed.parallelism>5</junit.jupiter.execution.parallel.config.fixed.parallelism>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <reporting>
         <excludeDefaults>true</excludeDefaults>
         <plugins>

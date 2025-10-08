@@ -2,7 +2,6 @@ package api.models;
 
 import lombok.*;
 
-@EqualsAndHashCode(callSuper = false)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
