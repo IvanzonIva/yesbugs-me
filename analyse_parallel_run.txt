@@ -1,0 +1,109 @@
+# Анализ распределения тестов между воркерами:
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.[1] , Password33$, USER, username, [Username must contain only letters, digits, dashes, underscores, and dots, Username must be between 3 and 15 characters, Username cannot be blank], test duration 6968 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.[2] ab, Password33$, USER, username, [Username must be between 3 and 15 characters], test duration 2373 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.[3] abc%, Password33$, USER, username, [Username must contain only letters, digits, dashes, underscores, and dots], test duration 1663 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.[4] abc$, Password33$, USER, username, [Username must contain only letters, digits, dashes, underscores, and dots], test duration 1429 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.adminCanCreateUserWithCorrectData(), test duration 2084 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.positive.[3] I P, test duration 5495 ms
+Thread ForkJoinPool-1-worker-17: Test finished tests.api.iteration2.positive.[3] 10000.0, test duration 8349 ms
+Thread ForkJoinPool-1-worker-20: Test finished tests.api.iteration2.positive.authUserCanDepositMoneyWithValidAmount(), test duration 9225 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.userCanCreateAccountTest(), test duration 4512 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.positive.[2] John Doe, test duration 5705 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.adminCanGenerateAuthToken(), test duration 1627 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration1.userCanGenerateAuthTokenTest(), test duration 2586 ms
+Thread ForkJoinPool-1-worker-17: Test finished tests.api.iteration2.positive.[2] 1.0, test duration 9484 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.positive.[1] Ivan Pavlov, test duration 5599 ms
+Thread ForkJoinPool-1-worker-20: Test finished tests.api.iteration2.negative.userCannotMakeNegativeDeposit(), test duration 8625 ms
+Thread ForkJoinPool-1-worker-21: Test finished tests.api.iteration2.negative.transferFromOtherAccountShouldBeForbidden(), test duration 18006 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration2.negative.[1] , name, Username cannot be blank, test duration 3911 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.negative.[2] ab, name, Username must be between 3 and 15 characters, test duration 3296 ms
+Thread ForkJoinPool-1-worker-20: Test finished tests.api.iteration2.negative.userCannotMakeZeroDeposit(), test duration 4739 ms
+Thread ForkJoinPool-1-worker-17: Test finished tests.api.iteration2.positive.[1] 100.0, test duration 8991 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.negative.[3] thisusernameiswaytoolong, name, Username must be between 3 and 15 characters, test duration 4698 ms
+Thread ForkJoinPool-1-worker-21: Test finished tests.api.iteration2.negative.authUserCanNotTransferMoneyToOwnAccountMoreThatAccountHas(), test duration 10546 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration2.positive.[3] 10000.0, test duration 10533 ms
+Thread ForkJoinPool-1-worker-20: Test finished tests.api.iteration2.negative.userCannotDepositToAnotherUserAccount(), test duration 10987 ms
+Thread ForkJoinPool-1-worker-17: Test finished tests.api.iteration2.negative.authUserCanNotTransferMoneyToOwnAccountNegativeAmount(), test duration 9506 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.negative.[4] user!@#, name, Invalid characters in username, test duration 3436 ms
+Thread ForkJoinPool-1-worker-5: Test finished tests.ui.iteration1.adminCanLoginWithCorrectDataTest(), test duration 47372 ms
+Thread ForkJoinPool-1-worker-20: Test finished tests.api.iteration2.negative.userCannotDepositToNotExistingUserAccountId(), test duration 10794 ms
+Thread ForkJoinPool-1-worker-17: Test finished tests.api.iteration2.negative.[5] user name, name, Username must not contain spaces, test duration 7407 ms
+Thread ForkJoinPool-1-worker-21: Test finished tests.api.iteration2.negative.authUserCanNotTransferMoneyToNotExistingAccount(), test duration 14614 ms
+Thread ForkJoinPool-1-worker-8: Test finished tests.ui.iteration1.userCanLoginWithCorrectDataTest(), test duration 57290 ms
+Thread ForkJoinPool-1-worker-1: Test finished tests.api.iteration2.positive.[2] 1.0, test duration 22332 ms
+Thread ForkJoinPool-1-worker-19: Test finished tests.api.iteration2.positive.[1] 100.0, test duration 20552 ms
+Thread ForkJoinPool-1-worker-4: Test finished tests.ui.iteration2.negative.errorWhenAccountNotSelected(), test duration 19499 ms
+Thread ForkJoinPool-1-worker-2: Test finished tests.ui.iteration2.positive.depositValidAmount(), test duration 19592 ms
+Thread ForkJoinPool-1-worker-11: Test finished tests.ui.iteration2.positive.transferValidAmount(), test duration 18764 ms
+Thread ForkJoinPool-1-worker-12: Test finished tests.ui.iteration2.positive.transferBetweenDifferentAccounts(), test duration 19999 ms
+Thread ForkJoinPool-1-worker-9: Test finished tests.ui.iteration2.positive.transferMaxAmount(), test duration 19605 ms
+
+# Таблица времени тестов на воркер (32 теста на 12 воркеров)
+
+Таблица времени выполнения тестов по воркерам
+Воркер	Тест 1	Время 1 (мс)	Тест 2	Время 2 (мс)	Тест 3	Время 3 (мс)	Суммарное время (мс)
+ForkJoinPool-1-worker-1	[1] (валидация username)	6,968	[2] ab (короткий username)	2,373	[4] abc$ (спецсимволы)	1,429	24,329
+ForkJoinPool-1-worker-19	[3] I P (изменение имени)	5,495	[2] John Doe (изменение имени)	5,705	[1] Ivan Pavlov (изменение имени)	5,599	23,426
+ForkJoinPool-1-worker-17	[3] 10000.0 (трансфер)	8,349	[2] 1.0 (трансфер)	9,484	[1] 100.0 (трансфер)	20,552	46,334
+ForkJoinPool-1-worker-20	authUserCanDepositMoneyWithValidAmount	9,225	userCannotMakeNegativeDeposit	8,625	userCannotDepositToAnotherUserAccount	10,987	35,566
+ForkJoinPool-1-worker-21	transferFromOtherAccountShouldBeForbidden	18,006	authUserCanNotTransferMoneyToOwnAccountMoreThatAccountHas	10,546	authUserCanNotTransferMoneyToNotExistingAccount	14,614	43,166
+ForkJoinPool-1-worker-5	adminCanLoginWithCorrectDataTest (UI)	47,372	-	-	-	-	47,372
+ForkJoinPool-1-worker-8	userCanLoginWithCorrectDataTest (UI)	57,290	-	-	-	-	57,290
+ForkJoinPool-1-worker-4	errorWhenAccountNotSelected (UI)	19,499	-	-	-	-	19,499
+ForkJoinPool-1-worker-2	depositValidAmount (UI)	19,592	-	-	-	-	19,592
+ForkJoinPool-1-worker-11	transferValidAmount (UI)	18,764	-	-	-	-	18,764
+ForkJoinPool-1-worker-12	transferBetweenDifferentAccounts (UI)	19,999	-	-	-	-	19,999
+ForkJoinPool-1-worker-9	transferMaxAmount (UI)	19,605	-	-	-	-	19,605
+
+Общая статистика:
+Всего тестов: 32 теста
+Количество воркеров: 12
+Общее время выполнения: ~335,942 мс (5.6 минут)
+Среднее время на тест: ~10,498 мс
+
+Ключевые наблюдения:
+Неравномерное распределение:
+worker-8: 57,290 мс (1 UI тест)
+worker-5: 47,372 мс (1 UI тест)
+worker-17: 46,334 мс (3 API теста)
+UI vs API тесты:
+UI тесты: 7 тестов, ~202,325 мс (60% общего времени)
+API тесты: 25 тестов, ~133,617 мс (40% общего времени)
+Проблемные зоны:
+UI тесты значительно медленнее API
+worker-8 и worker-5 заняты дольше всех одним тестом
+
+
+📚 Таблица 1 — Сравнение запусков тестов (JUnit 5 Parallel Strategies)
+| №     | Конфигурация             | Параллелизм | Конфиг. свойство                                                   | Время тестов    | Общее время | Failures | Errors | Примечания                                                                                                                |
+| ----- | ------------------------ | ----------- | ------------------------------------------------------------------ | --------------- | ----------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **1** | Последовательно          | 1           | нет                                                                | 299.8 с (~4:59) | 05:11 мин   | 10       | 8      | Контрольный запуск без параллелизма                                                                                       |
+| **2** | Fixed=5 (методы)         | 5           | `junit.jupiter.execution.parallel.mode.default=concurrent`         | 158.5 с (~2:38) | 02:51 мин   | 6        | 22     | Ускорение почти в 2 раза, рост ошибок                                                                                     |
+| **3** | Fixed=5 (методы+классы)  | 5           | `junit.jupiter.execution.parallel.mode.classes.default=concurrent` | 197.1 с (~3:17) | 03:21 мин   | 8        | 19     | Добавлен параллелизм на уровне классов, падение скорости                                                                  |
+| **4** | Fixed=10                 | 10          | `junit.jupiter.execution.parallel.config.fixed.parallelism=10`     | 168.8 с (~2:49) | 02:53 мин   | 7        | 23     | Более высокий параллелизм ускоряет тесты, но увеличивает ошибки                                                           |
+| **5** | Dynamic strategy         | ~8–12       | `junit.jupiter.execution.parallel.config.strategy=dynamic`         | 264.9 с (~4:25) | 04:32 мин   | 6        | 19     | Динамический параллелизм, снижение скорости из-за oversubscription                                                        |
+| **6** | Разделение API/UI тестов | API=8, UI=3 | Разные конфиги для API и UI                                        | 133.2 с (~2:13) | 02:19 мин   | 8        | 23     | ⚠️ Возможная ошибка настройки — тесты могли выполняться по старым параметрам. Лучшее время запуска, но ошибки сохраняются |
+
+
+
+| Показатель         | Последовательно | Fixed=5 (методы) | Fixed=5 (методы+классы) | Fixed=10  | Dynamic   | API/UI    | Изменение                                         |
+| ------------------ | --------------- | ---------------- | ----------------------- | --------- | --------- | --------- | ------------------------------------------------- |
+| Общее время        | 05:11           | 02:51            | 03:21                   | 02:53     | 04:32     | 02:19     | 🔽 −56 % (оптимум: API/UI)                        |
+| Время тестов       | 299.8 с         | 158.5 с          | 197.1 с                 | 168.8 с   | 264.9 с   | 133.2 с   | 🔽 −56 % → 🔼 +56 %                               |
+| Failures           | 10              | 6                | 8                       | 7         | 6         | 8         | ⚖️ небольшое улучшение стабильности               |
+| Errors             | 8               | 22               | 19                      | 23        | 19        | 23        | ⚠️ ошибки сохраняются при активной параллельности |
+| Производительность | 1×              | **1.89×**        | **1.52×**               | **1.78×** | **1.14×** | **2.26×** | ⚙️ разделение API/UI даёт лучший прирост скорости |
+
+
+🧠 Общие выводы
+📌 Короткие выводы
+Параллелизм ускоряет тесты — до 56% быстрее.
+Fixed=5 (методы) и API/UI — лучшие комбинации по скорости.
+Высокий параллелизм увеличивает количество ошибок.
+Разделение API/UI тестов — оптимальный вариант при правильной настройке.
+
+🔹 Рекомендуется:
+Проверить изоляцию тестовых данных и контекстов.
+Разделить тесты по типу (UI, API, Unit).
+Ввести @ResourceLock для конфликтных тестов.
+Провести замер CPU и GC-паузы при dynamic для выявления перегрузки.

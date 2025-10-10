@@ -6,7 +6,7 @@ import api.requests.steps.UserSteps;
 import common.annotation.AccountSession;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import tests.SessionStorage;
+import common.storage.SessionStorage;
 
 import java.util.LinkedList;
 import java.util.List;

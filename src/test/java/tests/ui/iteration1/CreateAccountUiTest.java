@@ -5,7 +5,7 @@ import UI.pages.UserDashbord;
 import api.models.CreateAccountResponse;
 import common.annotation.UserSession;
 import org.junit.jupiter.api.Test;
-import tests.SessionStorage;
+import common.storage.SessionStorage;
 
 import java.util.List;
 

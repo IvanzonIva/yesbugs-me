@@ -6,7 +6,7 @@ import api.utils.TestDataFactory;
 import common.annotation.AccountSession;
 import common.annotation.UserSession;
 import org.junit.jupiter.api.Test;
-import tests.SessionStorage;
+import common.storage.SessionStorage;
 import tests.ui.iteration1.BaseUiTest;
 
 import java.math.BigDecimal;
@@ -34,7 +34,7 @@ public class DepositUiTest extends BaseUiTest {
                 .selectAccount(account.getAccountNumber()) // Выбираем аккаунт по номеру
                 .enterAmount(depositAmount.doubleValue()) // Вводим случайную сумму
                 .clickDeposit() // Нажимаем кнопку Deposit
-                .checkAlertAndAccept(String.format("Successfully deposited $%s to account %s!",
+                .checkAlertAndAccept(String.format("✅ Successfully deposited $%s to account %s!",
                         depositAmount, account.getAccountNumber())); // Проверяем алерт
 
         // Проверка, что балан

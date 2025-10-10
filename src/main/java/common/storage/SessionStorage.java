@@ -1,4 +1,4 @@
-package tests;
+package common.storage;
 
 import api.models.CreateUserRequest;
 import api.models.CreateAccountResponse;
@@ -9,7 +9,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class SessionStorage {
-    private static final SessionStorage INSTANCE = new SessionStorage();
+    /*Thread Local - способ сделать SessionStorage потокобезопасным
+     Каждый поток обращаясь к INSTANCE.get() получают свою КОПИЮ
+     Под копотом храниться Map<Thread, SessionStorage>
+
+     Тест1 - Создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ), работает с ними
+     Тест2(паралельно) - Создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ), работает с ним
+     Тест3(паралельно) - Создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ), работает с ним
+
+     */
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private final LinkedHashMap<CreateUserRequest, UserSteps> userStepsMap = new LinkedHashMap<>();
     private final List<CreateAccountResponse> accounts = new ArrayList<>();
@@ -19,7 +28,7 @@ public class SessionStorage {
     // Методы для работы с пользователями
     public static void addUsers(List<CreateUserRequest> users) {
         for (CreateUserRequest user : users) {
-            INSTANCE.userStepsMap.put(user, new UserSteps(user.getUsername(), user.getPassword()));
+            INSTANCE.get().userStepsMap.put(user, new UserSteps(user.getUsername(), user.getPassword()));
         }
     }
     /**
@@ -28,7 +37,7 @@ public class SessionStorage {
      * @return Объект CreateUserRequest соответсвующий указанному порядковому номеру
      */
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.userStepsMap.keySet()).get(number - 1);
+        return new ArrayList<>(INSTANCE.get().userStepsMap.keySet()).get(number - 1);
     }
 
     public static CreateUserRequest getUser() {
@@ -36,11 +45,11 @@ public class SessionStorage {
     }
 
     public static List<CreateUserRequest> getUsers() {
-        return new ArrayList<>(INSTANCE.userStepsMap.keySet());
+        return new ArrayList<>(INSTANCE.get().userStepsMap.keySet());
     }
 
     public static UserSteps getSteps(int number) {
-        return new ArrayList<>(INSTANCE.userStepsMap.values()).get(number - 1);
+        return new ArrayList<>(INSTANCE.get().userStepsMap.values()).get(number - 1);
     }
 
     public static UserSteps getSteps() {
@@ -49,19 +58,19 @@ public class SessionStorage {
 
     // Новые методы для работы с аккаунтами
     public static void addAccounts(List<CreateAccountResponse> accountsList) {
-        INSTANCE.accounts.addAll(accountsList);
+        INSTANCE.get().accounts.addAll(accountsList);
     }
 
     public static List<CreateAccountResponse> getAccounts() {
-        return new ArrayList<>(INSTANCE.accounts);
+        return new ArrayList<>(INSTANCE.get().accounts);
     }
 
     public static CreateAccountResponse getAccount(int index) {
-        return INSTANCE.accounts.get(index - 1);
+        return INSTANCE.get().accounts.get(index - 1);
     }
 
     public static CreateAccountResponse getFirstAccount() {
-        return INSTANCE.accounts.isEmpty() ? null : INSTANCE.accounts.get(0);
+        return INSTANCE.get().accounts.isEmpty() ? null : INSTANCE.get().accounts.get(0);
     }
 
     // Универсальный метод для получения UserSteps (аналог из второго варианта)
@@ -70,7 +79,6 @@ public class SessionStorage {
     }
 
     public static void clear() {
-        INSTANCE.userStepsMap.clear();
-        INSTANCE.accounts.clear();
+        INSTANCE.get().accounts.clear();
     }
 }

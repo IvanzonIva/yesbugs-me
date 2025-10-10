@@ -6,7 +6,7 @@ import api.utils.TestDataFactory;
 import common.annotation.AccountSession;
 import common.annotation.UserSession;
 import org.junit.jupiter.api.Test;
-import tests.SessionStorage;
+import common.storage.SessionStorage;
 import tests.ui.iteration1.BaseUiTest;
 
 import java.math.BigDecimal;
