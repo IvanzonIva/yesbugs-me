@@ -2,8 +2,8 @@
 
 # Настройки
 IMAGE_NAME="nbank-tests"
-TEST_PROFILE=${1:-api-tests} # аргумент запуска
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+TEST_PROFILE=${1:-api-tests}
+TIMESTAMP=$(date +"%Y%m%d_%H%M")
 TEST_OUTPUT_DIR="./test-output/$TIMESTAMP"
 
 # Очистка старых результатов (старше 3 дней)
@@ -25,13 +25,13 @@ docker build -t $IMAGE_NAME . || {
 
 # Создаем директории для результатов
 mkdir -p "$TEST_OUTPUT_DIR/logs"
-mkdir -p "$TEST_OUTPUT_DIR/target"
 mkdir -p "$TEST_OUTPUT_DIR/results"
+mkdir -p "$TEST_OUTPUT_DIR/report"
 
 echo "📁 Результаты будут сохранены в: $TEST_OUTPUT_DIR"
 echo "   - logs/ (логи выполнения)"
-echo "   - target/ (отчеты surefire)"
-echo "   - results/ (HTML отчеты)"
+echo "   - results/ (отчеты surefire)"
+echo "   - report/ (HTML отчеты)"
 
 # Запуск Docker контейнера
 echo "🧪 Запуск тестов с профилем: $TEST_PROFILE"
@@ -40,8 +40,8 @@ echo "🔗 UI: http://192.168.1.14:3000"
 
 docker run --rm \
   -v "$TEST_OUTPUT_DIR/logs":/app/logs \
-  -v "$TEST_OUTPUT_DIR/target":/app/target \
-  -v "$TEST_OUTPUT_DIR/results":/app/reports \
+  -v "$TEST_OUTPUT_DIR/results":/app/target/surefire-reports \
+  -v "$TEST_OUTPUT_DIR/report":/app/target/site \
   -e TEST_PROFILE="$TEST_PROFILE" \
   -e APIBASEURL="http://192.168.1.14:4111" \
   -e UIBASEURL="http://192.168.1.14:3000" \
@@ -50,27 +50,53 @@ docker run --rm \
 EXIT_CODE=$?
 
 echo " "
-echo "📊 Выполнение тестов завершено с кодом выхода: $EXIT_CODE"
+echo "📊 Выполнение тестов завершено"
 
 # Проверка создания результатов
+echo " "
+echo "📋 Созданные файлы:"
+
 if [ -f "$TEST_OUTPUT_DIR/logs/run.log" ]; then
-    echo "✅ Файл логов создан: $TEST_OUTPUT_DIR/logs/run.log"
+    echo "✅ Логи: $TEST_OUTPUT_DIR/logs/run.log"
+    # Покажем последние 5 строк лога для быстрой диагностики
+    echo "   Последние строки лога:"
+    tail -5 "$TEST_OUTPUT_DIR/logs/run.log" | sed 's/^/   > /'
 else
-    echo "⚠️  Внимание: Файл логов не создан"
+    echo "❌ Логи не созданы"
 fi
 
-if [ -f "$TEST_OUTPUT_DIR/results/surefire.html" ]; then
-    echo "✅ HTML отчет создан: $TEST_OUTPUT_DIR/results/surefire.html"
-    echo "   Открыть: open $TEST_OUTPUT_DIR/results/surefire.html"
+if [ -d "$TEST_OUTPUT_DIR/results" ] && [ "$(ls -A "$TEST_OUTPUT_DIR/results")" ]; then
+    echo "✅ Результаты: $TEST_OUTPUT_DIR/results"
+    # Покажем количество тестовых файлов
+    COUNT=$(find "$TEST_OUTPUT_DIR/results" -name "*.xml" -o -name "*.txt" | wc -l)
+    echo "   Найдено файлов результатов: $COUNT"
 else
-    echo "⚠️  Внимание: HTML отчет не создан"
+    echo "❌ Результаты тестов не созданы"
 fi
 
-# Покажем краткую статистику если есть результаты
-if [ -d "$TEST_OUTPUT_DIR/target" ]; then
+if [ -d "$TEST_OUTPUT_DIR/report" ] && [ "$(ls -A "$TEST_OUTPUT_DIR/report")" ]; then
+    echo "✅ Отчет: $TEST_OUTPUT_DIR/report"
+    if [ -f "$TEST_OUTPUT_DIR/report/surefire-report.html" ]; then
+        echo "   HTML отчет: $TEST_OUTPUT_DIR/report/surefire-report.html"
+    fi
+else
+    echo "❌ HTML отчет не создан"
+fi
+
+# Краткая статистика если есть результаты
+if [ -d "$TEST_OUTPUT_DIR/results" ]; then
     echo " "
-    echo "📈 Статистика тестов:"
-    find "$TEST_OUTPUT_DIR/target" -name "*.txt" -exec grep -H "Tests run:" {} \; | head -5
+    echo "📈 Краткая статистика:"
+    find "$TEST_OUTPUT_DIR/results" -name "*.txt" -exec grep -l "Tests run:" {} \; | head -3 | while read file; do
+        echo "   $(basename "$file"): $(grep "Tests run:" "$file")"
+    done
+fi
+
+echo " "
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "✅ Тесты завершены успешно"
+else
+    echo "❌ Тесты завершены с ошибками (код: $EXIT_CODE)"
 fi
 
 exit $EXIT_CODE
