@@ -25,6 +25,25 @@ public class Config {
     }
 
     public static String getProperty(String key) {
+        //Приоритет 1 - переменная системы baseApiUrl =...
+        String systemValue = System.getProperty(key);
+
+        if (systemValue != null) {
+            System.out.println("🔧 Using system property '" + key + "': " + systemValue);
+            return systemValue;
+        }
+
+        //Приоритет 2 - переменная окружения baseApi - BASEAPIURL
+        //Если в переменной присутвутют точки, то будет преобразование с нижним подчеркиваним
+        String envKey = key.toUpperCase().replace('.','_');
+        String envValue = System.getenv(envKey);
+
+        if (envValue != null) {
+            System.out.println("🔧 Using environment variable '" + envKey + "': " + envValue);
+            return envValue;
+        }
+
+        //Приоритет 3 - config.properties
         String value = INSTANCE.properties.getProperty(key);
         System.out.println("🔧 Getting property '" + key + "': " + value);
         return value;
