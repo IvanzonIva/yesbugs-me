@@ -1,0 +1,43 @@
+# Build outputs
+target/
+build/
+out/
+
+# Logs and reports
+logs/
+results/
+report/
+allure-results/
+*.log
+*.tmp
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Documentation
+README.md
+CHANGELOG.md
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Scripts and configs
+run-tests.sh
+*.properties
+*.yml
+*.yaml
+
+# Temporary files
+*.tmp
+*.temp
