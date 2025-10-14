@@ -60,17 +60,50 @@ for image in $images; do
     if docker pull "$image" > /dev/null 2>&1; then
         echo "   ✅ Успешно"
     else
-        echo "   ❌ Ошибка"
+        echo "   ❌ Ошибка загрузки $image"
     fi
 done
 
 echo ""
 echo "✅ Все образы загружены"
-echo "🚀 Запускаем Docker Compose..."
+echo "🚀 Запускаем Docker Compose в фоновом режиме..."
 
-# Запускаем compose в зависимости от доступной команды
+# Запускаем compose в фоновом режиме
 if command -v docker-compose &> /dev/null; then
-    docker-compose up
+    docker-compose up -d
 else
-    docker compose up
+    docker compose up -d
+fi
+
+# Проверяем успешность запуска
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ Docker Compose успешно запущен в фоновом режиме"
+    echo ""
+    echo "📊 Статус контейнеров:"
+
+    # Показываем статус контейнеров
+    if command -v docker-compose &> /dev/null; then
+        docker-compose ps
+    else
+        docker compose ps
+    fi
+
+    echo ""
+    echo "💡 Для просмотра логов выполните: docker-compose logs -f"
+    echo "💡 Для остановки выполните: docker-compose down"
+else
+    echo "❌ Ошибка при запуске Docker Compose"
+    exit 1
+fi
+
+# Дополнительная проверка через 3 секунды
+echo ""
+echo "⏳ Проверяем состояние контейнеров через 3 секунды..."
+sleep 3
+
+if command -v docker-compose &> /dev/null; then
+    docker-compose ps
+else
+    docker compose ps
 fi
