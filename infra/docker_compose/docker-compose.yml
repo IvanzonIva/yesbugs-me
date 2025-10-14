@@ -13,32 +13,32 @@ services:
 
   # ==================== ФРОНТЕНД СЕРВИС ====================
   frontend:
-    image: nobugsme/nbank-ui:latest
+    image: nobugsme/nbank-ui:with_nginx
     container_name: nbank-frontend
-    expose: # не открываем порт наружу, а даем доступ контейнерам в сети
-      - "80"
+    ports:
+      - "3000:80"
     depends_on:
       - backend
     networks:
       - nbank-network
     restart: unless-stopped
 
-  # ==================== NGINX ПРОКСИ ====================
-  nginx:
-    image: nginx:latest                       # Официальный образ Nginx
-    container_name: nbank-nginx
-    ports:
-      - "80:80"                               # Основной веб-порт
-      - "443:443"                             # HTTPS порт (можно настроить позже)
-    networks:
-      - nbank-network
-    restart: unless-stopped
-    depends_on:
-      - frontend
-      - backend
-    volumes:
-      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro    # Монтируем кастомную конфигурацию Nginx
-    # Nginx будет проксировать запросы к фронтенду и бекенду
+#  # ==================== NGINX ПРОКСИ ====================
+#  nginx:
+#    image: nginx:latest                       # Официальный образ Nginx
+#    container_name: nbank-nginx
+#    ports:
+#      - "80:80"                               # Основной веб-порт
+#      - "443:443"                             # HTTPS порт (можно настроить позже)
+#    networks:
+#      - nbank-network
+#    restart: unless-stopped
+#    depends_on:
+#      - frontend
+#      - backend
+#    volumes:
+#      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro    # Монтируем кастомную конфигурацию Nginx
+#    # Nginx будет проксировать запросы к фронтенду и бекенду
 
   # ==================== SELENOID (SELENIUM) ====================
   selenoid:
@@ -60,7 +60,7 @@ services:
     image: aerokube/selenoid-ui:latest        # Веб-интерфейс для мониторинга Selenoid
     container_name: nbank-selenoid-ui
     ports:
-      - "6567:8080"                           # Веб-интерфейс на порту 6567
+      - "8080:8080"                           # Веб-интерфейс на порту 6567
     command: ["--selenoid-uri", "http://selenoid:4444"]
     networks:
       - nbank-network
