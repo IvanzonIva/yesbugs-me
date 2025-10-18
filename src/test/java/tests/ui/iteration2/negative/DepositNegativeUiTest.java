@@ -198,10 +198,6 @@ public class DepositNegativeUiTest extends BaseUiTest {
         BigDecimal expectedBalanceSecond = initialBalanceSecond.add(depositAmount)
                 .setScale(2, RoundingMode.HALF_UP);
 
-//        assertThat(updatedSecondAccount.getBalance().setScale(2, RoundingMode.HALF_UP))
-//                .as("Баланс второго аккаунта должен увеличиться")
-//                .isEqualByComparingTo(expectedBalanceSecond);
-
         // Проверяем, что баланс первого аккаунта не изменился
         CreateAccountResponse updatedFirstAccount = accountsAfterDeposit.stream()
                 .filter(acc -> acc.getId() == firstAccount.getId())

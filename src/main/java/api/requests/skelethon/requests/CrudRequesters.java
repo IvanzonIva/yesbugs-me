@@ -5,6 +5,8 @@ import api.requests.skelethon.Endpoint;
 import api.requests.skelethon.HttpRequest;
 import api.requests.skelethon.interfaces.CrudEndpointinterface;
 import api.requests.skelethon.interfaces.GetAllEndpointInterface;
+import common.helpers.StepLogger;
+import io.qameta.allure.Step;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
@@ -18,17 +20,20 @@ public class CrudRequesters extends HttpRequest implements CrudEndpointinterface
 
     @Override
     public ValidatableResponse post(BaseModel model) {
-        var body = model == null ? "" : model;
-        return given()
-                .spec(requestSpecification)
-                .body(body)
-                .post(endpoint.getUrl())
-                .then()
-                .assertThat()
-                .spec(responseSpecification);
+         return StepLogger.log("POST request to " + endpoint.getUrl(), ()-> {
+            var body = model == null ? "" : model;
+            return given()
+                    .spec(requestSpecification)
+                    .body(body)
+                    .post(endpoint.getUrl())
+                    .then()
+                    .assertThat()
+                    .spec(responseSpecification);
+        });
     }
 
     @Override
+    @Step("GET запрос на {endpoint} с id {id}")
     public ValidatableResponse get() {
         return given()
                 .spec(requestSpecification)
@@ -39,6 +44,7 @@ public class CrudRequesters extends HttpRequest implements CrudEndpointinterface
     }
 
     @Override
+    @Step("PUT запрос на {endpoint} с телом {model}")
     public ValidatableResponse update(BaseModel model) {
         return given()
                 .spec(requestSpecification)
@@ -50,11 +56,13 @@ public class CrudRequesters extends HttpRequest implements CrudEndpointinterface
     }
 
     @Override
+    @Step("DELETE запрос на {endpoint} с id {id}")
     public Object delete(long id) {
         return null;
     }
 
     @Override
+    @Step("GET запрос на {endpoint}")
     public ValidatableResponse getAll(Class<?> clazz) {
         return given()
                 .spec(requestSpecification)

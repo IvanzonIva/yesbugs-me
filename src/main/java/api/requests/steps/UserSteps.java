@@ -6,6 +6,7 @@ import api.requests.skelethon.requests.CrudRequesters;
 import api.requests.skelethon.requests.ValidatedCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import common.helpers.StepLogger;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.ResponseSpecification;
 
@@ -22,73 +23,85 @@ public class UserSteps {
     }
 
     public List<CreateAccountResponse> getAllAccounts() {
-        return new ValidatedCrudRequester<CreateAccountResponse>(
-                RequestSpecs.authAsUser(username, password),
-                Endpoint.GET_ACCOUNT,
-                ResponseSpecs.requestReturnsOK()).getAll(CreateAccountResponse[].class);
+        return StepLogger.log("Получение списка всех счетов пользователя", () -> {
+            return new ValidatedCrudRequester<CreateAccountResponse>(
+                    RequestSpecs.authAsUser(username, password),
+                    Endpoint.GET_ACCOUNT,
+                    ResponseSpecs.requestReturnsOK()).getAll(CreateAccountResponse[].class);
+        });
     }
 
-
     public static ValidatableResponse createAccount(CreateUserRequest createUserRequestModel) {
-        return new CrudRequesters(
-                RequestSpecs.authAsUser(createUserRequestModel.getUsername(), createUserRequestModel.getPassword()),
-                Endpoint.ACCOUNTS,
-                ResponseSpecs.entityWasCreated())
-                .post(null);
+        return StepLogger.log("Создание нового счета для пользователя", () -> {
+            return new CrudRequesters(
+                    RequestSpecs.authAsUser(createUserRequestModel.getUsername(), createUserRequestModel.getPassword()),
+                    Endpoint.ACCOUNTS,
+                    ResponseSpecs.entityWasCreated())
+                    .post(null);
+        });
     }
 
     public static DepositResponse Deposit(CreateUserRequest createdUserModel,
                                           DepositRequest depositRequest,
                                           ResponseSpecification responseSpec) {
+        return StepLogger.log("Пополнение счета пользователя", () -> {
+            ValidatableResponse response = new CrudRequesters(
+                    RequestSpecs.depositAsAuthUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
+                    Endpoint.DEPOSIT,
+                    responseSpec
+            ).post(depositRequest);
 
-        ValidatableResponse response = new CrudRequesters(
-                RequestSpecs.depositAsAuthUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
-                Endpoint.DEPOSIT,
-                responseSpec
-        ).post(depositRequest);
-
-        // Если статус 200 — это успешный запрос, тогда можно парсить JSON
-        if (response.extract().statusCode() == 200) {
-            return response.extract().as(DepositResponse.class);
-        } else {
-            // Для ошибок ничего не парсим, просто возвращаем null (или можешь выбросить исключение)
-            return null;
-        }
+            // Если статус 200 — это успешный запрос, тогда можно парсить JSON
+            if (response.extract().statusCode() == 200) {
+                return response.extract().as(DepositResponse.class);
+            } else {
+                // Для ошибок ничего не парсим, просто возвращаем null (или можешь выбросить исключение)
+                return null;
+            }
+        });
     }
 
     // Перегрузка
     public static DepositResponse Deposit(CreateUserRequest createdUserModel,
                                           DepositRequest depositRequest) {
-        return Deposit(createdUserModel, depositRequest, ResponseSpecs.requestReturnsOK());
+        return StepLogger.log("Пополнение счета пользователя (базовая валидация)", () -> {
+            return Deposit(createdUserModel, depositRequest, ResponseSpecs.requestReturnsOK());
+        });
     }
 
     public static TransferResponse makeTransfer(CreateUserRequest createdUserModel,
                                                 TransferRequest transferRequestModel) {
-        return new ValidatedCrudRequester<TransferResponse>(
-                RequestSpecs.authAsUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
-                Endpoint.TRANSFER,
-                ResponseSpecs.requestReturnsOK())
-                .post(transferRequestModel);
+        return StepLogger.log("Выполнение перевода между счетами", () -> {
+            return new ValidatedCrudRequester<TransferResponse>(
+                    RequestSpecs.authAsUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
+                    Endpoint.TRANSFER,
+                    ResponseSpecs.requestReturnsOK())
+                    .post(transferRequestModel);
+        });
     }
 
     public static long getAccountID(ValidatableResponse validatableResponse) {
-        return ((Integer) validatableResponse.extract().path("id")).longValue();
+        return StepLogger.log("Извлечение ID счета из ответа", () -> {
+            return ((Integer) validatableResponse.extract().path("id")).longValue();
+        });
     }
 
     public static ChangeNameResponse changeName(CreateUserRequest createdUser, ChangeNameRequest newUserName) {
-        return new ValidatedCrudRequester<ChangeNameResponse>(
-                RequestSpecs.authAsUser(createdUser.getUsername(),
-                        createdUser.getPassword()),
-                Endpoint.CHANGE_NAME,
-                ResponseSpecs.requestReturnOK("Profile updated successfully"))
-                .update(newUserName);
+        return StepLogger.log("Изменение имени пользователя", () -> {
+            return new ValidatedCrudRequester<ChangeNameResponse>(
+                    RequestSpecs.authAsUser(createdUser.getUsername(), createdUser.getPassword()),
+                    Endpoint.CHANGE_NAME,
+                    ResponseSpecs.requestReturnOK("Profile updated successfully"))
+                    .update(newUserName);
+        });
     }
 
     public static GetUserResponse getUser(CreateUserRequest createdUser) {
-        return (GetUserResponse) new ValidatedCrudRequester<GetUserResponse>(
-                RequestSpecs.authAsUser(createdUser.getUsername(), createdUser.getPassword()),
-                Endpoint.GET_USER,
-                ResponseSpecs.requestReturnsOK()).get();
+        return StepLogger.log("Получение информации о пользователе", () -> {
+            return (GetUserResponse) new ValidatedCrudRequester<GetUserResponse>(
+                    RequestSpecs.authAsUser(createdUser.getUsername(), createdUser.getPassword()),
+                    Endpoint.GET_USER,
+                    ResponseSpecs.requestReturnsOK()).get();
+        });
     }
-
 }
