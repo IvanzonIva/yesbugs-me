@@ -7,6 +7,7 @@ import api.requests.skelethon.requests.ValidatedCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
 import api.utils.RandomModelGenerator;
+import common.helpers.StepLogger;
 
 import java.util.List;
 
@@ -20,18 +21,23 @@ public class AdminSteps {
 
     // Новый перегруженный метод с параметром
     public static CreateUserRequest createUser(CreateUserRequest userRequest) {
-        new ValidatedCrudRequester<CreateUserResponse>(
-                RequestSpecs.adminSpec(),
-                Endpoint.ADMIN_USER,
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        return StepLogger.log("Создание нового пользователя через API", () -> {
+            new ValidatedCrudRequester<CreateUserResponse>(
+                    RequestSpecs.adminSpec(),
+                    Endpoint.ADMIN_USER,
+                    ResponseSpecs.entityWasCreated())
+                    .post(userRequest);
 
-        return userRequest;
+            return userRequest;
+        });
     }
+
     public static List<CreateUserResponse> getAllUsers() {
-        return new ValidatedCrudRequester<CreateUserResponse>(
-                RequestSpecs.adminSpec(),
-                Endpoint.ADMIN_USER,
-                ResponseSpecs.requestReturnsOK()).getAll(CreateUserResponse[].class);
+        return StepLogger.log("Получение списка всех пользователей через API", () -> {
+            return new ValidatedCrudRequester<CreateUserResponse>(
+                    RequestSpecs.adminSpec(),
+                    Endpoint.ADMIN_USER,
+                    ResponseSpecs.requestReturnsOK()).getAll(CreateUserResponse[].class);
+        });
     }
 }

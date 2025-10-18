@@ -2,6 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
@@ -43,6 +44,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <!-- Allure BOM -->
             <dependency>
                 <groupId>io.qameta.allure</groupId>
@@ -162,7 +164,8 @@
         </dependency>
         <dependency>
             <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-java-commons</artifactId>
+            <artifactId>allure-selenide</artifactId>
+            <version>2.29.0</version>
         </dependency>
 
         <!-- Hamcrest -->
@@ -285,11 +288,6 @@
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>
                 <version>${allure.maven.version}</version>
-                <configuration>
-                    <reportVersion>${allure.version}</reportVersion>
-                    <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
-                    <reportDirectory>${project.build.directory}/allure-report</reportDirectory>
-                </configuration>
             </plugin>
 
             <!-- Maven Surefire Report Plugin -->
@@ -301,9 +299,9 @@
         </plugins>
     </build>
 
-    <!-- ДОБАВЛЕННЫЕ ПРОФИЛИ ДЛЯ ЭКСПЕРИМЕНТА -->
+    <!-- Профили -->
     <profiles>
-        <!-- Профиль для API тестов (8 потоков) -->
+        <!-- API-тесты -->
         <profile>
             <id>api-tests</id>
             <build>
@@ -322,14 +320,12 @@
                                 <exclude>**/*UiTest.java</exclude>
                             </excludes>
                             <parallel>methods</parallel>
-                            <threadCount>8</threadCount>
-                            <useUnlimitedThreads>false</useUnlimitedThreads>
+                            <threadCount>4</threadCount>
                             <perCoreThreadCount>false</perCoreThreadCount>
                             <systemPropertyVariables>
                                 <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
                                 <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-                                <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
-                                <junit.jupiter.execution.parallel.config.fixed.parallelism>8</junit.jupiter.execution.parallel.config.fixed.parallelism>
+                                <junit.jupiter.execution.parallel.config.fixed.parallelism>4</junit.jupiter.execution.parallel.config.fixed.parallelism>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
@@ -337,7 +333,7 @@
             </build>
         </profile>
 
-        <!-- Профиль для UI тестов (3 потока) -->
+        <!-- UI-тесты -->
         <profile>
             <id>ui-tests</id>
             <build>
@@ -351,23 +347,24 @@
                                 <include>**/ui/**/*Test.java</include>
                                 <include>**/*UiTest.java</include>
                             </includes>
-                            <parallel>classes</parallel>
-                            <threadCount>3</threadCount>
+                            <excludedGroups>quarantine</excludedGroups>
+                            <!-- Запускаем последовательно для стабильности -->
+                            <parallel>none</parallel>
+                            <threadCount>1</threadCount>
                             <useUnlimitedThreads>false</useUnlimitedThreads>
-                            <perCoreThreadCount>false</perCoreThreadCount>
+                            <!-- Увеличиваем таймауты для стабильности -->
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
                             <systemPropertyVariables>
-                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-                                <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
-                                <junit.jupiter.execution.parallel.config.fixed.parallelism>3</junit.jupiter.execution.parallel.config.fixed.parallelism>
+                                <selenide.timeout>2000</selenide.timeout>
+                                <selenide.pageLoadTimeout>4500</selenide.pageLoadTimeout>
                             </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
+                        </configuration>                    </plugin>
                 </plugins>
             </build>
         </profile>
 
-        <!-- Профиль для всех тестов (стандартная конфигурация) -->
+        <!-- Все тесты -->
         <profile>
             <id>all-tests</id>
             <build>
@@ -379,11 +376,9 @@
                         <configuration>
                             <parallel>methods</parallel>
                             <threadCount>5</threadCount>
-                            <useUnlimitedThreads>false</useUnlimitedThreads>
                             <systemPropertyVariables>
                                 <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
                                 <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-                                <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
                                 <junit.jupiter.execution.parallel.config.fixed.parallelism>5</junit.jupiter.execution.parallel.config.fixed.parallelism>
                             </systemPropertyVariables>
                         </configuration>

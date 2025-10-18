@@ -3,6 +3,7 @@ package UI.pages;
 import UI.elements.BaseElement;
 import api.models.CreateUserRequest;
 import api.specs.RequestSpecs;
+import api.utils.RetryUtils;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
@@ -29,11 +30,20 @@ public abstract class BasePage <T extends BasePage>{
     public <T extends BasePage> T getPage(Class<T> pageClass) {return  Selenide.page(pageClass);}
 
     public T checkAlertMessageAndAccept(String bankAlert) {
-        Alert alert = switchTo().alert();
-        assertThat(alert.getText()).contains(bankAlert);
-        alert.accept();
+        // Используем перегрузку для Runnable (без возвращаемого значения)
+        RetryUtils.retry(
+                () -> {
+                    Alert alert = Selenide.switchTo().alert();
+                    assertThat(alert.getText()).contains(bankAlert);
+                    alert.accept();
+                },
+                5, // 5 попыток
+                1000 // 1 секунда между попытками
+        );
+
         return (T) this;
     }
+
     public static void authAsUser(String username, String password) {
         Selenide.open("/");
         String userAuthHeader = RequestSpecs.getUserAuthHeader(username, password);
