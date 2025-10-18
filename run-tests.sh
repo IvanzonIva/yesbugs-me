@@ -35,16 +35,16 @@ echo "   - report/ (HTML отчеты)"
 
 # Запуск Docker контейнера
 echo "🧪 Запуск тестов с профилем: $TEST_PROFILE"
-echo "🔗 API: http://192.168.1.14:4111"
-echo "🔗 UI: http://192.168.1.14:3000"
+echo "🔗 API: http://192.168.1.11:4111"
+echo "🔗 UI: http://192.168.1.11:3000"
 
 docker run --rm \
   -v "$TEST_OUTPUT_DIR/logs":/app/logs \
   -v "$TEST_OUTPUT_DIR/results":/app/target/surefire-reports \
   -v "$TEST_OUTPUT_DIR/report":/app/target/site \
   -e TEST_PROFILE="$TEST_PROFILE" \
-  -e APIBASEURL="http://192.168.1.14:4111" \
-  -e UIBASEURL="http://192.168.1.14:3000" \
+  -e APIBASEURL="http://192.168.1.11:4111" \
+  -e UIBASEURL="http://192.168.1.11:3000" \
   $IMAGE_NAME
 
 EXIT_CODE=$?

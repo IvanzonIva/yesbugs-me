@@ -37,15 +37,23 @@ public class UserSteps {
                 .post(null);
     }
 
-    //Полная версия
     public static DepositResponse Deposit(CreateUserRequest createdUserModel,
                                           DepositRequest depositRequest,
                                           ResponseSpecification responseSpec) {
-        return new CrudRequesters(
+
+        ValidatableResponse response = new CrudRequesters(
                 RequestSpecs.depositAsAuthUser(createdUserModel.getUsername(), createdUserModel.getPassword()),
                 Endpoint.DEPOSIT,
                 responseSpec
-        ).post(depositRequest).extract().as(DepositResponse.class);
+        ).post(depositRequest);
+
+        // Если статус 200 — это успешный запрос, тогда можно парсить JSON
+        if (response.extract().statusCode() == 200) {
+            return response.extract().as(DepositResponse.class);
+        } else {
+            // Для ошибок ничего не парсим, просто возвращаем null (или можешь выбросить исключение)
+            return null;
+        }
     }
 
     // Перегрузка

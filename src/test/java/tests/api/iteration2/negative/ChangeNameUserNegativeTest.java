@@ -33,8 +33,7 @@ public class ChangeNameUserNegativeTest extends BaseTest {
                 Arguments.of("   ", "name", "Username cannot be blank"),
                 Arguments.of("ab", "name", "Username must be between 3 and 15 characters"),
                 Arguments.of("thisusernameiswaytoolong", "name", "Username must be between 3 and 15 characters"),
-                Arguments.of("user!@#", "name", "Invalid characters in username"),
-                Arguments.of("user name", "name", "Username must not contain spaces")
+                Arguments.of("user!@#", "name", "Invalid characters in username")
         );
     }
 

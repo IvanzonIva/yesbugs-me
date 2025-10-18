@@ -46,8 +46,6 @@ public class AccountSessionExtension implements BeforeEachCallback {
         // Вызываем метод createAccount из UserSteps и преобразуем ответ
         var response = UserSteps.createAccount(user);
 
-        // Предполагаем, что метод возвращает ValidatableResponse, который нужно преобразовать
-        // Вам может понадобиться адаптировать эту часть под ваш реальный API ответ
         return response.extract().as(CreateAccountResponse.class);
     }
 }

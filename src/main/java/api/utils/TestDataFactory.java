@@ -4,6 +4,7 @@ import api.models.CreateUserRequest;
 import api.models.ChangeNameRequest;
 import api.models.DepositRequest;
 import api.models.TransferRequest;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Random;
@@ -15,47 +16,68 @@ public class TestDataFactory {
         return RandomModelGenerator.generate(CreateUserRequest.class);
     }
 
-    // Пополение с конкретной суммой
-    public static DepositRequest createDepositModel(long accountId, double balance) {
+    // Пополнение с конкретной суммой (BigDecimal)
+    public static DepositRequest createDepositModel(long accountId, BigDecimal balance) {
         return DepositRequest.builder()
                 .id(accountId)
-                .balance(balance).build();
+                .balance(balance.setScale(2, RoundingMode.HALF_UP))
+                .build();
     }
 
     // Пополнение со случайной суммой
     public static DepositRequest createDepositModel(long accountId) {
         return DepositRequest.builder()
                 .id(accountId)
-                .balance(getRandomDepositAmount().doubleValue()).build();
+                .balance(getRandomDepositAmount())
+                .build();
     }
 
-    // Генерации случайных сумм
+    // Генерация случайных сумм
     public static BigDecimal getRandomDepositAmount() {
-        return getRandomAmount(0.1, 5000);
+        return getRandomAmount(new BigDecimal("0.10"), new BigDecimal("5000.00"));
     }
 
+    // Генерация BigDecimal-значений в диапазоне (обновленная версия)
+    public static BigDecimal getRandomAmount(BigDecimal min, BigDecimal max) {
+        if (min.compareTo(max) >= 0) {
+            throw new IllegalArgumentException("min must be less than max");
+        }
+
+        BigDecimal range = max.subtract(min);
+        // Генерируем случайное число от 0 до 1 как BigDecimal
+        BigDecimal randomFactor = BigDecimal.valueOf(random.nextDouble());
+        // Вычисляем случайную сумму в диапазоне
+        BigDecimal randomAmount = min.add(range.multiply(randomFactor));
+
+        return randomAmount.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    // Сохраняем старый метод для обратной совместимости
     public static BigDecimal getRandomAmount(double from, double to) {
-        double randomValue = random.nextDouble() * (to - from) + from;
-        return BigDecimal.valueOf(randomValue).setScale(2, RoundingMode.HALF_UP);
+        return getRandomAmount(BigDecimal.valueOf(from), BigDecimal.valueOf(to));
     }
 
-    public static TransferRequest createTransferModel(long accountIdOne, long accountIdTwo, double balance) {
+    // Перевод с конкретной суммой
+    public static TransferRequest createTransferModel(long accountIdOne, long accountIdTwo, BigDecimal amount) {
         return TransferRequest.builder()
                 .senderAccountId(accountIdOne)
                 .receiverAccountId(accountIdTwo)
-                .amount(balance).build();
+                .amount(amount.setScale(2, RoundingMode.HALF_UP))
+                .build();
     }
 
-    // Перевода со случайной суммой
+    // Перевод со случайной суммой
     public static TransferRequest createTransferModel(long accountIdOne, long accountIdTwo) {
         return TransferRequest.builder()
                 .senderAccountId(accountIdOne)
                 .receiverAccountId(accountIdTwo)
-                .amount(getRandomDepositAmount().doubleValue()).build();
+                .amount(getRandomDepositAmount())
+                .build();
     }
 
     public static ChangeNameRequest changeNameModel(String newUserName) {
         return ChangeNameRequest.builder()
-                .name(newUserName).build();
+                .name(newUserName)
+                .build();
     }
 }

@@ -3,6 +3,7 @@ package UI.pages;
 import com.codeborne.selenide.*;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 
 import static com.codeborne.selenide.Condition.interactable;
@@ -48,8 +49,20 @@ public class DepositPage extends UserDashbord {
         return accountsOptions;
     }
 
+    public DepositPage enterAmount(BigDecimal amount) {
+        // Используем toPlainString() чтобы избежать научной нотации для больших/маленьких чисел
+        amountField.setValue(amount.toPlainString());
+        return this;
+    }
+
+    // Перегруженный метод для обратной совместимости (если нужно)
     public DepositPage enterAmount(double amount) {
-        amountField.setValue(Double.toString(amount));
+        return enterAmount(BigDecimal.valueOf(amount));
+    }
+
+    // Дополнительный метод для ввода суммы как строки
+    public DepositPage enterAmount(String amount) {
+        amountField.setValue(amount);
         return this;
     }
 
@@ -57,5 +70,4 @@ public class DepositPage extends UserDashbord {
         depositButton.click();
         return this;
     }
-
 }

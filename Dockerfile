@@ -1,5 +1,5 @@
 # Базовый докер образ
-FROM maven:3.9.6-eclipse-temurin-22
+FROM maven:3.9.9-eclipse-temurin-21
 
 # Дефолтные значения аргументов
 ARG TEST_PROFILE=api-tests

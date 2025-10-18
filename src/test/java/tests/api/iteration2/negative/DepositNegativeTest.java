@@ -12,11 +12,13 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 import api.requests.steps.UserSteps;
 
+import java.math.BigDecimal;
+
 public class DepositNegativeTest extends BaseTest {
     private static final long NOT_EXISTING_ACCOUNT_ID = 6969;
-    public static final double DEPOSIT_AMOUNT = 100.00;
-    public static final double NEGATIVE_DEPOSIT_AMOUNT = -99.00;
-    public static final double ZERO_DEPOSIT_AMOUNT = 0.00;
+    public static final BigDecimal DEPOSIT_AMOUNT = new BigDecimal("100.00");
+    public static final BigDecimal NEGATIVE_DEPOSIT_AMOUNT = new BigDecimal("-99.00");
+    public static final BigDecimal ZERO_DEPOSIT_AMOUNT = BigDecimal.ZERO;
 
     @Test
     public void userCannotDepositToAnotherUserAccount() {
@@ -34,16 +36,16 @@ public class DepositNegativeTest extends BaseTest {
 
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountIdTwo, DEPOSIT_AMOUNT);
 
-        double senderBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal senderBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser1.getUsername(), createdUser1.getPassword(), accountIdOne);
 
         UserSteps.Deposit(createdUser1, makeDeposit,
                 ResponseSpecs.requestReturnsForbidden(ErrorMessages.UNAUTHORIZED_ACCESS.getMessage()));
 
-        double senderBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal senderBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser1.getUsername(), createdUser1.getPassword(), accountIdOne);
 
-        softly.assertThat(senderBalanceBefore).isEqualTo(senderBalanceAfter);
+        softly.assertThat(senderBalanceBefore).isEqualByComparingTo(senderBalanceAfter);
     }
 
     @Test
@@ -56,16 +58,16 @@ public class DepositNegativeTest extends BaseTest {
 
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(NOT_EXISTING_ACCOUNT_ID, DEPOSIT_AMOUNT);
 
-        double balanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal balanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountId);
 
         UserSteps.Deposit(createdUser, makeDeposit,
                 ResponseSpecs.requestReturnsForbidden(ErrorMessages.UNAUTHORIZED_ACCESS.getMessage()));
 
-        double balanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal balanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountId);
 
-        softly.assertThat(balanceBefore).isEqualTo(balanceAfter);
+        softly.assertThat(balanceBefore).isEqualByComparingTo(balanceAfter);
     }
 
     @Test
@@ -78,16 +80,16 @@ public class DepositNegativeTest extends BaseTest {
 
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountId, NEGATIVE_DEPOSIT_AMOUNT);
 
-        double balanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal balanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountId);
 
         UserSteps.Deposit(createdUser, makeDeposit,
                 ResponseSpecs.requestReturnsBadRequest(ErrorMessages.INVALID_ACCOUNT_OR_AMOUNT.getMessage()));
 
-        double balanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal balanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountId);
 
-        softly.assertThat(balanceBefore).isEqualTo(balanceAfter);
+        softly.assertThat(balanceBefore).isEqualByComparingTo(balanceAfter);
     }
 
     @Test
@@ -100,15 +102,15 @@ public class DepositNegativeTest extends BaseTest {
 
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountId, ZERO_DEPOSIT_AMOUNT);
 
-        double balanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal balanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountId);
 
         UserSteps.Deposit(createdUser, makeDeposit,
                 ResponseSpecs.requestReturnsBadRequest(ErrorMessages.INVALID_ACCOUNT_OR_AMOUNT.getMessage()));
 
-        double balanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal balanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountId);
 
-        softly.assertThat(balanceBefore).isEqualTo(balanceAfter);
+        softly.assertThat(balanceBefore).isEqualByComparingTo(balanceAfter);
     }
 }
