@@ -4,20 +4,12 @@ import api.models.CreateUserRequest;
 import api.models.CreateAccountResponse;
 import api.requests.steps.UserSteps;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 public class SessionStorage {
-    /*Thread Local - способ сделать SessionStorage потокобезопасным
-     Каждый поток обращаясь к INSTANCE.get() получают свою КОПИЮ
-     Под копотом храниться Map<Thread, SessionStorage>
-
-     Тест1 - Создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ), работает с ними
-     Тест2(паралельно) - Создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ), работает с ним
-     Тест3(паралельно) - Создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ), работает с ним
-
-     */
     private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private final LinkedHashMap<CreateUserRequest, UserSteps> userStepsMap = new LinkedHashMap<>();
@@ -31,11 +23,7 @@ public class SessionStorage {
             INSTANCE.get().userStepsMap.put(user, new UserSteps(user.getUsername(), user.getPassword()));
         }
     }
-    /**
-     * Возвращем объект CreateUserRequest по его порядковому номеру, в списке созданноых пользователей.
-     * @param namber Порядковый номер, начинаю с одного, а не с нуля.
-     * @return Объект CreateUserRequest соответсвующий указанному порядковому номеру
-     */
+
     public static CreateUserRequest getUser(int number) {
         return new ArrayList<>(INSTANCE.get().userStepsMap.keySet()).get(number - 1);
     }
@@ -56,8 +44,16 @@ public class SessionStorage {
         return getSteps(1);
     }
 
-    // Новые методы для работы с аккаунтами
+    // Методы для работы с аккаунтами
     public static void addAccounts(List<CreateAccountResponse> accountsList) {
+        // Приводим все балансы к BigDecimal с точностью 2 знака
+        for (CreateAccountResponse account : accountsList) {
+            if (account.getBalance() == null) {
+                account.setBalance(BigDecimal.ZERO.setScale(2));
+            } else {
+                account.setBalance(account.getBalance().setScale(2, BigDecimal.ROUND_HALF_UP));
+            }
+        }
         INSTANCE.get().accounts.addAll(accountsList);
     }
 
@@ -73,7 +69,7 @@ public class SessionStorage {
         return INSTANCE.get().accounts.isEmpty() ? null : INSTANCE.get().accounts.get(0);
     }
 
-    // Универсальный метод для получения UserSteps (аналог из второго варианта)
+    // Универсальный метод для получения UserSteps
     public static UserSteps getUserSteps(int userIndex) {
         return getSteps(userIndex);
     }

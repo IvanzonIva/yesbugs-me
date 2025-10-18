@@ -23,22 +23,22 @@ services:
       - nbank-network
     restart: unless-stopped
 
-#  # ==================== NGINX ПРОКСИ ====================
-#  nginx:
-#    image: nginx:latest                       # Официальный образ Nginx
-#    container_name: nbank-nginx
-#    ports:
-#      - "80:80"                               # Основной веб-порт
-#      - "443:443"                             # HTTPS порт (можно настроить позже)
-#    networks:
-#      - nbank-network
-#    restart: unless-stopped
-#    depends_on:
-#      - frontend
-#      - backend
-#    volumes:
-#      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro    # Монтируем кастомную конфигурацию Nginx
-#    # Nginx будет проксировать запросы к фронтенду и бекенду
+  #  # ==================== NGINX ПРОКСИ ====================
+  #  nginx:
+  #    image: nginx:latest                       # Официальный образ Nginx
+  #    container_name: nbank-nginx
+  #    ports:
+  #      - "80:80"                               # Основной веб-порт
+  #      - "443:443"                             # HTTPS порт (можно настроить позже)
+  #    networks:
+  #      - nbank-network
+  #    restart: unless-stopped
+  #    depends_on:
+  #      - frontend
+  #      - backend
+  #    volumes:
+  #      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro    # Монтируем кастомную конфигурацию Nginx
+  #    # Nginx будет проксировать запросы к фронтенду и бекенду
 
   # ==================== SELENOID (SELENIUM) ====================
   selenoid:
@@ -70,4 +70,4 @@ services:
 # ==================== ОБЩАЯ СЕТЬ ====================
 networks:
   nbank-network:
-    name: nbank-network                     # Явное имя сети (опционально)
+    name: nbank-network                     # Явное имя сети

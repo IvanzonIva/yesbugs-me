@@ -2,6 +2,8 @@ package api.models;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @NoArgsConstructor
@@ -9,6 +11,6 @@ import lombok.*;
 @Builder
 public class DepositRequest extends BaseModel {
     private long id;
-    private double balance;
+    private BigDecimal balance;
 
 }

@@ -2,6 +2,7 @@ package api.models;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = false)
@@ -12,6 +13,6 @@ import java.util.List;
 public class DepositResponse extends BaseModel {
     private long id;
     private String accountNumber;
-    private double balance;
+    private BigDecimal balance;
     private List<TransactionResponse> transactions;
 }

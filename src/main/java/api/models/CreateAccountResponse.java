@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @Data
@@ -15,6 +16,6 @@ import java.util.List;
 public class CreateAccountResponse extends BaseModel {
     private long id;
     private String accountNumber;
-    private double balance;
+    private BigDecimal balance;
     private List<TransactionResponse> transactions;
 }

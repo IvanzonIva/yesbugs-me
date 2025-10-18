@@ -16,13 +16,13 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 import api.requests.steps.UserSteps;
 
+import java.math.BigDecimal;
+
 public class TransferNegativeTest extends BaseTest {
     private static final long NOT_EXISTING_ACCOUNT_ID = 123456;
-    private static final double DEPOSIT_AMOUNT = 100.00;
-    private static final double AMOUNT_MORE_THAN_ACCOUNT_HAS = 4000.00;
-    private static final double NEGATIVE_AMOUNT = -66.00;
-
-
+    private static final BigDecimal DEPOSIT_AMOUNT = new BigDecimal("100.00");
+    private static final BigDecimal AMOUNT_MORE_THAN_ACCOUNT_HAS = new BigDecimal("4000.00");
+    private static final BigDecimal NEGATIVE_AMOUNT = new BigDecimal("-66.00");
 
     @Test
     public void authUserCanNotTransferMoneyToOwnAccountMoreThatAccountHas() {
@@ -39,7 +39,7 @@ public class TransferNegativeTest extends BaseTest {
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountIdOne, DEPOSIT_AMOUNT);
         UserSteps.Deposit(createdUser, makeDeposit);
 
-        double senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
+        BigDecimal senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountIdOne);
 
         TransferRequest transferRequestModel = TestDataFactory.createTransferModel(accountIdOne, accountIdTwo, AMOUNT_MORE_THAN_ACCOUNT_HAS);
@@ -50,10 +50,10 @@ public class TransferNegativeTest extends BaseTest {
                 ResponseSpecs.requestReturnsBadRequest("Invalid transfer: insufficient funds or invalid accounts"))
                 .post(transferRequestModel);
 
-        double senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
+        BigDecimal senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountIdOne);
 
-        softly.assertThat(senderAccountBalanceBefore).isEqualTo(senderAccountBalanceAfter);
+        softly.assertThat(senderAccountBalanceBefore).isEqualByComparingTo(senderAccountBalanceAfter);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class TransferNegativeTest extends BaseTest {
 
         DepositResponse responseModel = UserSteps.Deposit(createdUser, makeDeposit);
 
-        double senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
+        BigDecimal senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountIdOne);
 
         TransferRequest transferRequestModel = TestDataFactory.createTransferModel(accountIdOne, accountIdTwo, NEGATIVE_AMOUNT);
@@ -83,10 +83,10 @@ public class TransferNegativeTest extends BaseTest {
                 ResponseSpecs.requestReturnsBadRequest("Invalid transfer: insufficient funds or invalid accounts"))
                 .post(transferRequestModel);
 
-        double senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
+        BigDecimal senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountIdOne);
 
-        softly.assertThat(senderAccountBalanceBefore).isEqualTo(senderAccountBalanceAfter);
+        softly.assertThat(senderAccountBalanceBefore).isEqualByComparingTo(senderAccountBalanceAfter);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class TransferNegativeTest extends BaseTest {
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(accountIdOne, DEPOSIT_AMOUNT);
         UserSteps.Deposit(createdUser, makeDeposit);
 
-        double senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
+        BigDecimal senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountIdOne);
 
         TransferRequest transferRequestModel = TestDataFactory.createTransferModel(accountIdOne, NOT_EXISTING_ACCOUNT_ID, DEPOSIT_AMOUNT);
@@ -112,10 +112,10 @@ public class TransferNegativeTest extends BaseTest {
                 ResponseSpecs.requestReturnsBadRequest("Invalid transfer: insufficient funds or invalid accounts"))
                 .post(transferRequestModel);
 
-        double senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
+        BigDecimal senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser.getUsername(),
                 createdUser.getPassword(), accountIdOne);
 
-        softly.assertThat(senderAccountBalanceBefore).isEqualTo(senderAccountBalanceAfter);
+        softly.assertThat(senderAccountBalanceBefore).isEqualByComparingTo(senderAccountBalanceAfter);
     }
 
     @Test
@@ -139,10 +139,10 @@ public class TransferNegativeTest extends BaseTest {
 
         TransferRequest transferRequestModel = TestDataFactory.createTransferModel(accountIdTwo, accountIdOne, DEPOSIT_AMOUNT);
 
-        double senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser1.getUsername(),
+        BigDecimal senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser1.getUsername(),
                 createdUser1.getPassword(), accountIdOne);
 
-        double receiverAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser2.getUsername(),
+        BigDecimal receiverAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(createdUser2.getUsername(),
                 createdUser2.getPassword(), accountIdTwo);
 
         new CrudRequesters(
@@ -151,13 +151,13 @@ public class TransferNegativeTest extends BaseTest {
                 ResponseSpecs.requestReturnsForbidden("Unauthorized access to account"))
                 .post(transferRequestModel);
 
-        double senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser1.getUsername(),
+        BigDecimal senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser1.getUsername(),
                 createdUser1.getPassword(), accountIdOne);
 
-        double receiverAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser2.getUsername(),
+        BigDecimal receiverAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(createdUser2.getUsername(),
                 createdUser2.getPassword(), accountIdTwo);
 
-        softly.assertThat(senderAccountBalanceBefore).isEqualTo(senderAccountBalanceAfter);
-        softly.assertThat(receiverAccountBalanceBefore).isEqualTo(receiverAccountBalanceAfter);
+        softly.assertThat(senderAccountBalanceBefore).isEqualByComparingTo(senderAccountBalanceAfter);
+        softly.assertThat(receiverAccountBalanceBefore).isEqualByComparingTo(receiverAccountBalanceAfter);
     }
 }

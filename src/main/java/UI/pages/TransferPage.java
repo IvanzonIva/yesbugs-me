@@ -5,6 +5,8 @@ import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
 import api.utils.RetryUtils;
 
+import java.math.BigDecimal;
+
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
@@ -82,8 +84,20 @@ public class TransferPage extends UserDashbord{
         return this;
     }
 
+    public TransferPage enterAmount(BigDecimal amount){
+        // Преобразуем BigDecimal в строку для отправки в поле ввода
+        amountField.sendKeys(amount.toPlainString());
+        return this;
+    }
+
+    // Перегруженный метод для обратной совместимости (если нужно)
     public TransferPage enterAmount(double amount){
-        amountField.sendKeys(String.valueOf(amount));
+        return enterAmount(BigDecimal.valueOf(amount));
+    }
+
+    // Дополнительный метод для ввода суммы как строки
+    public TransferPage enterAmount(String amount){
+        amountField.sendKeys(amount);
         return this;
     }
 

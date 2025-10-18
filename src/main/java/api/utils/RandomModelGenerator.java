@@ -1,12 +1,16 @@
 package api.utils;
 
 import com.github.curiousoddman.rgxgen.RgxGen;
+
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Random;
 import java.util.UUID;
 
 public class RandomModelGenerator {
+
     private static final Random random = new Random();
 
     @SuppressWarnings("unchecked")
@@ -47,11 +51,12 @@ public class RandomModelGenerator {
         } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
             return random.nextBoolean();
         } else if (type.equals(double.class) || type.equals(Double.class)) {
-            return random.nextDouble();
+            return roundDouble(random.nextDouble() * 10000); // чтобы не давал слишком большие значения
+        } else if (type.equals(BigDecimal.class)) {
+            return getRandomBigDecimal(0.01, 5000.00);
         } else if (type.equals(LocalDate.class)) {
             return LocalDate.now().minusDays(random.nextInt(365));
         } else if (type.isEnum()) {
-            // Генерация случайного значения для enum
             Object[] enumValues = type.getEnumConstants();
             return enumValues[random.nextInt(enumValues.length)];
         }
@@ -59,41 +64,42 @@ public class RandomModelGenerator {
     }
 
     private static Object convertToType(String value, Class<?> targetType) {
-        if (targetType.equals(String.class)) {
-            return value;
-        } else if (targetType.isEnum()) {
-            // Преобразование строки в enum
-            Object[] enumValues = targetType.getEnumConstants();
-            for (Object enumValue : enumValues) {
-                if (enumValue.toString().equals(value)) {
-                    return enumValue;
+        try {
+            if (targetType.equals(String.class)) {
+                return value;
+            } else if (targetType.isEnum()) {
+                Object[] enumValues = targetType.getEnumConstants();
+                for (Object enumValue : enumValues) {
+                    if (enumValue.toString().equals(value)) {
+                        return enumValue;
+                    }
                 }
-            }
-            // Если не нашли точное совпадение, возвращаем случайное значение enum
-            return enumValues[random.nextInt(enumValues.length)];
-        } else if (targetType.equals(int.class) || targetType.equals(Integer.class)) {
-            try {
+                return enumValues[random.nextInt(enumValues.length)];
+            } else if (targetType.equals(int.class) || targetType.equals(Integer.class)) {
                 return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                return random.nextInt(1000);
-            }
-        } else if (targetType.equals(long.class) || targetType.equals(Long.class)) {
-            try {
+            } else if (targetType.equals(long.class) || targetType.equals(Long.class)) {
                 return Long.parseLong(value);
-            } catch (NumberFormatException e) {
-                return random.nextLong();
-            }
-        } else if (targetType.equals(boolean.class) || targetType.equals(Boolean.class)) {
-            return Boolean.parseBoolean(value);
-        } else if (targetType.equals(double.class) || targetType.equals(Double.class)) {
-            try {
+            } else if (targetType.equals(boolean.class) || targetType.equals(Boolean.class)) {
+                return Boolean.parseBoolean(value);
+            } else if (targetType.equals(double.class) || targetType.equals(Double.class)) {
                 return Double.parseDouble(value);
-            } catch (NumberFormatException e) {
-                return random.nextDouble();
+            } else if (targetType.equals(BigDecimal.class)) {
+                return new BigDecimal(value).setScale(2, RoundingMode.HALF_UP);
             }
+        } catch (NumberFormatException e) {
+            // fallback — если regex выдал нечисловое
+            return generateRandomValue(targetType);
         }
 
-        // Для неподдерживаемых типов возвращаем null
         return null;
+    }
+
+    private static double roundDouble(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private static BigDecimal getRandomBigDecimal(double min, double max) {
+        double randomValue = random.nextDouble() * (max - min) + min;
+        return BigDecimal.valueOf(randomValue).setScale(2, RoundingMode.HALF_UP);
     }
 }

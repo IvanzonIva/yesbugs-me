@@ -12,6 +12,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class DepositTest extends BaseTest {
 
@@ -25,7 +26,7 @@ public class DepositTest extends BaseTest {
         long accountId = UserSteps.getAccountID(createAccountResponse);
 
         // Получаем баланс до депозита
-        double accountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal accountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(),
                 createdUser.getPassword(),
                 accountId);
@@ -36,21 +37,23 @@ public class DepositTest extends BaseTest {
         // Создаем запрос на депозит
         DepositRequest makeDeposit = TestDataFactory.createDepositModel(
                 accountId,
-                depositAmount.doubleValue());
+                depositAmount);
 
         // Выполняем депозит
         DepositResponse responseModel = UserSteps.Deposit(createdUser, makeDeposit);
 
         // Получаем баланс после депозита
-        double accountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal accountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(),
                 createdUser.getPassword(),
                 accountId);
 
         // Сравнение балансов
-        double expectedBalance = accountBalanceBefore + depositAmount.doubleValue();
-        softly.assertThat(accountBalanceAfter)
+        BigDecimal expectedBalance = accountBalanceBefore.add(depositAmount)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        softly.assertThat(accountBalanceAfter.setScale(2, RoundingMode.HALF_UP))
                 .as("Баланс аккаунта должен увеличиться на сумму депозита")
-                .isEqualTo(expectedBalance);
+                .isEqualByComparingTo(expectedBalance);
     }
 }

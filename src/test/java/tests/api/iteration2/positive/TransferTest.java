@@ -10,14 +10,26 @@ import api.utils.TestDataFactory;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.math.BigDecimal;
+import java.util.stream.Stream;
 
 public class TransferTest extends BaseTest {
 
+    private static Stream<Arguments> transferAmounts() {
+        return Stream.of(
+                Arguments.of(new BigDecimal("100.00")),
+                Arguments.of(new BigDecimal("1.00")),
+                Arguments.of(new BigDecimal("10000.00"))
+        );
+    }
+
     @ParameterizedTest
-    @ValueSource(doubles = {100.0, 1.0, 10000.0})
+    @MethodSource("transferAmounts")
     @DisplayName("Авторизованный пользователь может переводить деньги между своими счетами")
-    public void authUserCanTransferMoneyToAnotherOwnAccount(double transferAmount) {
+    public void authUserCanTransferMoneyToAnotherOwnAccount(BigDecimal transferAmount) {
 
         CreateUserRequest createdUser = TestDataFactory.createUserModel();
         AdminSteps.createUser(createdUser);
@@ -29,26 +41,29 @@ public class TransferTest extends BaseTest {
         long accountIdTwo = UserSteps.getAccountID(createAccountResponseTwo);
 
         // кладём денег чуть больше, чем собираемся переводить
-        AccountBalanceUtils.depositEnough(createdUser, accountIdOne, transferAmount * 2);
+        BigDecimal depositAmount = transferAmount.multiply(new BigDecimal("2"));
+        AccountBalanceUtils.depositEnough(createdUser, accountIdOne, depositAmount);
 
-        double senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountIdOne);
 
         TransferRequest transferRequestModel =
                 TestDataFactory.createTransferModel(accountIdOne, accountIdTwo, transferAmount);
         UserSteps.makeTransfer(createdUser, transferRequestModel);
 
-        double senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser.getUsername(), createdUser.getPassword(), accountIdOne);
 
-        softly.assertThat(senderAccountBalanceBefore)
-                .isEqualTo(senderAccountBalanceAfter + transferAmount);
+        BigDecimal expectedBalance = senderAccountBalanceBefore.subtract(transferAmount);
+
+        softly.assertThat(senderAccountBalanceAfter)
+                .isEqualByComparingTo(expectedBalance);
     }
 
     @ParameterizedTest
-    @ValueSource(doubles = {100.0, 1.0, 10000.0})
+    @MethodSource("transferAmounts")
     @DisplayName("Авторизованный пользователь может переводить деньги на счёт другого пользователя")
-    public void authUserCanTransferMoneyToAnotherUserAccount(double transferAmount) {
+    public void authUserCanTransferMoneyToAnotherUserAccount(BigDecimal transferAmount) {
 
         CreateUserRequest createdUser1 = TestDataFactory.createUserModel();
         AdminSteps.createUser(createdUser1);
@@ -63,25 +78,29 @@ public class TransferTest extends BaseTest {
         long accountIdTwo = UserSteps.getAccountID(createAccountResponseTwo);
 
         // кладём денег чуть больше, чем собираемся переводить
-        AccountBalanceUtils.depositEnough(createdUser1, accountIdOne, transferAmount * 2);
+        BigDecimal depositAmount = transferAmount.multiply(new BigDecimal("2"));
+        AccountBalanceUtils.depositEnough(createdUser1, accountIdOne, depositAmount);
 
-        double senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal senderAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser1.getUsername(), createdUser1.getPassword(), accountIdOne);
-        double receiverAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal receiverAccountBalanceBefore = AccountBalanceUtils.getBalanceForAccount(
                 createdUser2.getUsername(), createdUser2.getPassword(), accountIdTwo);
 
         TransferRequest transferRequestModel =
                 TestDataFactory.createTransferModel(accountIdOne, accountIdTwo, transferAmount);
         UserSteps.makeTransfer(createdUser1, transferRequestModel);
 
-        double senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal senderAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser1.getUsername(), createdUser1.getPassword(), accountIdOne);
-        double receiverAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
+        BigDecimal receiverAccountBalanceAfter = AccountBalanceUtils.getBalanceForAccount(
                 createdUser2.getUsername(), createdUser2.getPassword(), accountIdTwo);
 
-        softly.assertThat(senderAccountBalanceBefore)
-                .isEqualTo(senderAccountBalanceAfter + transferAmount);
-        softly.assertThat(receiverAccountBalanceBefore)
-                .isEqualTo(receiverAccountBalanceAfter - transferAmount);
+        BigDecimal expectedSenderBalance = senderAccountBalanceBefore.subtract(transferAmount);
+        BigDecimal expectedReceiverBalance = receiverAccountBalanceBefore.add(transferAmount);
+
+        softly.assertThat(senderAccountBalanceAfter)
+                .isEqualByComparingTo(expectedSenderBalance);
+        softly.assertThat(receiverAccountBalanceAfter)
+                .isEqualByComparingTo(expectedReceiverBalance);
     }
 }

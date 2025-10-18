@@ -2,6 +2,8 @@ package api.models;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @NoArgsConstructor
@@ -11,6 +13,6 @@ public class TransferResponse extends BaseModel {
     private long receiverAccountId;
     private long senderAccountId;
     private String message;
-    private double amount;
+    private BigDecimal amount;
 
 }
