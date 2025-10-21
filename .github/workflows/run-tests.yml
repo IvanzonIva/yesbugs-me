@@ -43,17 +43,67 @@ jobs:
           APIBASEURL: http://localhost:4111
           UIBASEURL: http://frontend
 
-      # 6️⃣ Логин в Docker Hub через Secrets
+      # 6️⃣ Swagger Coverage
+      - name: Run Swagger coverage
+        if: always()
+        run: ./.swagger-coverage-commandline/bin/swagger-coverage-commandline -s http://localhost:4111/v3/api-docs -i ./swagger-coverage-output
+
+      # 7️⃣ История репортов
+      - name: Load test report history
+        uses: actions/checkout@v4  # Обновил до v4
+        if: always()
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # 8️⃣ Создание директории для истории
+      - name: Create allure history directory
+        if: always()
+        run: |
+          mkdir -p allure-history/${{ github.run_number }}
+          mkdir -p allure-history/${{ github.run_number }}/swagger-coverage
+
+      # 9️⃣ Билд Allure отчета
+      - name: Build Allure report
+        uses: simple-elf/allure-report-action@v1.7
+        if: always()
+        with:
+          gh_pages: gh-pages
+          allure_results: target/allure-results
+          allure_history: allure-history
+
+      # 🔟 Копирование Swagger coverage отчета
+      - name: Build Swagger coverage report
+        if: always()
+        run: |
+          cp swagger-coverage-report.html allure-history/${{ github.run_number }}/swagger-coverage/
+          cp -r swagger-coverage-results allure-history/${{ github.run_number }}/swagger-coverage/ 2>/dev/null || true
+
+      # 1️⃣1️⃣ Публикация тестовых отчетов
+      - name: Publish test reports
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+
+      # 1️⃣2️⃣ Очистка сервисов
+      - name: Clean up services
+        if: always()
+        run: cd infra/docker_compose && docker compose down
+
+      # 1️⃣3️⃣ Логин в Docker Hub через Secrets
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # 7️⃣ Сборка Docker-образа с тегом commit hash
+      # 1️⃣4️⃣ Сборка Docker-образа с тегом commit hash
       - name: Build Docker image
         run: docker build -t ivanzon/autotests:${{ github.sha }} .
 
-      # 8️⃣ Пуш Docker-образа в Docker Hub
+      # 1️⃣5️⃣ Пуш Docker-образа в Docker Hub
       - name: Push Docker image
         run: docker push ivanzon/autotests:${{ github.sha }}
