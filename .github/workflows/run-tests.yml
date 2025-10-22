@@ -44,7 +44,7 @@ jobs:
       # 4️⃣ Анализ покрытия API
       - name: Run Swagger coverage
         if: always()
-        run: .swagger-coverage-commandline/bin/swagger-coverage-commandline -s http://localhost:4111/v3/api-docs -i target/swagger-coverage-output
+        run: ./.swagger-coverage-commandline/bin/swagger-coverage-commandline -s http://localhost:4111/v3/api-docs -i ./target/swagger-coverage-output
 
       # 5️⃣ Подготовка истории отчетов
       - name: Load test report history
