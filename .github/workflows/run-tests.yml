@@ -3,8 +3,8 @@ name: Run tests and build Docker
 on:
   push:
     paths:
-      - 'src/**'          # реагируем только на изменения в src
-  workflow_dispatch:      # ручной запуск
+      - 'src/**'
+  workflow_dispatch:
 
 jobs:
   run-tests-and-docker:
@@ -12,18 +12,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout репозитория
+      # 1️⃣ Подготовительные шаги
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Настройка JDK
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'corretto'
           java-version: '21'
 
-      # 3️⃣ Кеширование Maven
       - name: Cache Maven repository
         uses: actions/cache@v4
         with:
@@ -32,38 +30,35 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4️⃣ Запуск вспомогательных сервисов через Docker Compose
+      # 2️⃣ Запуск инфраструктуры
       - name: Set up services
         run: cd infra/docker_compose && bash restart_docker.sh && cd ../..
 
-      # 5️⃣ Запуск автотестов
+      # 3️⃣ Запуск тестов
       - name: Run tests
         run: ./mvnw clean test -q
         env:
           APIBASEURL: http://localhost:4111
           UIBASEURL: http://frontend
 
-      # 6️⃣ Swagger Coverage
+      # 4️⃣ Анализ покрытия API
       - name: Run Swagger coverage
         if: always()
-        run: ./.swagger-coverage-commandline/bin/swagger-coverage-commandline -s http://localhost:4111/v3/api-docs -i ./swagger-coverage-output
+        run: .swagger-coverage-commandline/bin/swagger-coverage-commandline -s http://localhost:4111/v3/api-docs -i target/swagger-coverage-output
 
-      # 7️⃣ История репортов
+      # 5️⃣ Подготовка истории отчетов
       - name: Load test report history
-        uses: actions/checkout@v4  # Обновил до v4
+        uses: actions/checkout@v2
         if: always()
         with:
           ref: gh-pages
           path: gh-pages
 
-      # 8️⃣ Создание директории для истории
       - name: Create allure history directory
         if: always()
-        run: |
-          mkdir -p allure-history/${{ github.run_number }}
-          mkdir -p allure-history/${{ github.run_number }}/swagger-coverage
+        run: mkdir -p allure-history/${{ github.run_number }}
 
-      # 9️⃣ Билд Allure отчета
+      # 6️⃣ Генерация отчетов
       - name: Build Allure report
         uses: simple-elf/allure-report-action@v1.7
         if: always()
@@ -72,14 +67,11 @@ jobs:
           allure_results: target/allure-results
           allure_history: allure-history
 
-      # 🔟 Копирование Swagger coverage отчета
       - name: Build Swagger coverage report
         if: always()
-        run: |
-          cp swagger-coverage-report.html allure-history/${{ github.run_number }}/swagger-coverage/
-          cp -r swagger-coverage-results allure-history/${{ github.run_number }}/swagger-coverage/ 2>/dev/null || true
+        run: cp swagger-coverage-report.html allure-history/${{ github.run_number }}/
 
-      # 1️⃣1️⃣ Публикация тестовых отчетов
+      # 7️⃣ Публикация отчетов
       - name: Publish test reports
         uses: peaceiris/actions-gh-pages@v3
         if: always()
@@ -88,22 +80,20 @@ jobs:
           publish_branch: gh-pages
           publish_dir: allure-history
 
-      # 1️⃣2️⃣ Очистка сервисов
+      # 8️⃣ Очистка инфраструктуры
       - name: Clean up services
         if: always()
         run: cd infra/docker_compose && docker compose down
 
-      # 1️⃣3️⃣ Логин в Docker Hub через Secrets
+      # 9️⃣ Сборка и публикация Docker образа
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # 1️⃣4️⃣ Сборка Docker-образа с тегом commit hash
       - name: Build Docker image
         run: docker build -t ivanzon/autotests:${{ github.sha }} .
 
-      # 1️⃣5️⃣ Пуш Docker-образа в Docker Hub
       - name: Push Docker image
         run: docker push ivanzon/autotests:${{ github.sha }}
