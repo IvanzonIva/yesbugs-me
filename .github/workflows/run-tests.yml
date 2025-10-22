@@ -30,12 +30,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 🔽 ДОБАВИТЬ ЭТОТ ШАГ
-      - name: Install Swagger Coverage
-        run: |
-          wget -q https://github.com/swagger-coverage/swagger-coverage/releases/download/commandline-1.5.0/swagger-coverage-commandline-1.5.0.zip
-          unzip -q swagger-coverage-commandline-1.5.0.zip -d .swagger-coverage-commandline
-
       # 2️⃣ Запуск инфраструктуры
       - name: Set up services
         run: cd infra/docker_compose && bash restart_docker.sh && cd ../..
