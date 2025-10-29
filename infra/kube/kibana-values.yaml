@@ -1,0 +1,19 @@
+replicaCount: 1
+
+kibana:
+  image:
+    repository: docker.elastic.co/kibana/kibana
+    tag: "7.17.3"
+    pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: "256Mi"
+  limits:
+    memory: "512Mi"
+
+service:
+  type: NodePort
+  port: 5601
+
+elasticsearchHosts: ["http://elasticsearch-master.logging.svc.cluster.local:9200"]

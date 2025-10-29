@@ -1,0 +1,30 @@
+grafana:
+  enabled: true
+  service:
+    type: NodePort
+  adminUser: admin
+  adminPassword: admin
+  sidecar:
+    dashboards:
+      enabled: true
+    datasources:
+      enabled: true
+
+prometheus:
+  service:
+    type: NodePort
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        release: monitoring
+    maximumStartupDurationSeconds: 600
+
+prometheus-node-explorer:
+  enabled: true
+
+kube-state-metrics:
+  enabled: true
+  #Node Exporter → метрики узлов
+  #Kube State Metrics → метрики Kubernetes объектов
+  #Prometheus → сбор и хранение метрик
+  #Grafana → визуализация метрик
